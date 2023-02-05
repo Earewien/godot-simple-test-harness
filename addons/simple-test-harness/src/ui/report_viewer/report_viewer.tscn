@@ -1,0 +1,50 @@
+[gd_scene load_steps=2 format=3 uid="uid://dvhgsdugpusnv"]
+
+[ext_resource type="Script" path="res://addons/simple-test-harness/src/ui/report_viewer/report_viewer.gd" id="1_m1arv"]
+
+[node name="Simple Test Harness" type="Control"]
+custom_minimum_size = Vector2(200, 300)
+layout_mode = 3
+anchors_preset = 0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_m1arv")
+
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="ClearButton" type="Button" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "Clear"
+
+[node name="RunAllButton" type="Button" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+visible = false
+layout_mode = 2
+text = "Run All"
+
+[node name="RunFailedButton" type="Button" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+visible = false
+layout_mode = 2
+text = "RunFailed"
+
+[node name="ReportTree" type="Tree" parent="ScrollContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+hide_root = true
+
+[connection signal="pressed" from="ScrollContainer/VBoxContainer/HBoxContainer/ClearButton" to="." method="_on_clear_button_pressed"]
