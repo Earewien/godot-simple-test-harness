@@ -18,8 +18,6 @@ var test_method_line_number:int = -1
 var test_method_arguments_count:int
 var test_method_returned_type:int
 
-var is_coroutine:bool
-
 #------------------------------------------
 # Variables privées
 #------------------------------------------
@@ -34,7 +32,6 @@ static func from(function:ParsedGDScriptFunction) -> TestCaseMethodPlan:
     method_plan.test_method_line_number = function.function_line_number
     method_plan.test_method_arguments_count = function.function_arguments.size()
     method_plan.test_method_returned_type = function.function_returned_type
-    method_plan.is_coroutine = function.is_coroutine
     return method_plan
 
 static func deserialize(data:Dictionary) -> TestCaseMethodPlan:
@@ -43,7 +40,6 @@ static func deserialize(data:Dictionary) -> TestCaseMethodPlan:
     method_plan.test_method_line_number = data["test_method_line_number"]
     method_plan.test_method_arguments_count = data["test_method_arguments_count"]
     method_plan.test_method_returned_type = data["test_method_returned_type"]
-    method_plan.is_coroutine = data["is_coroutine"]
     return method_plan
 
 func serialize() -> Dictionary:
@@ -51,8 +47,7 @@ func serialize() -> Dictionary:
         "test_method_name" : test_method_name,
         "test_method_line_number" : test_method_line_number,
         "test_method_arguments_count" : test_method_arguments_count,
-        "test_method_returned_type" : test_method_returned_type,
-        "is_coroutine" : is_coroutine
+        "test_method_returned_type" : test_method_returned_type
     }
 
 #------------------------------------------

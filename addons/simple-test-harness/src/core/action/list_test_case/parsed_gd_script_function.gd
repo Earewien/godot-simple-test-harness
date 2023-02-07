@@ -22,7 +22,6 @@ var is_default:bool
 var is_static:bool
 var is_virtual:bool
 var is_editor:bool
-var is_coroutine:bool
 
 #------------------------------------------
 # Variables privées
@@ -41,7 +40,6 @@ static func from(data:Dictionary, script_content:PackedStringArray) -> ParsedGDS
     function._read_function_name(data)
     function._read_function_flags(data)
     function._read_line_number(script_content)
-    function._read_function_coroutine(script_content)
     function._read_function_arguments(data)
     function._read_function_returned_type(data)
     return function
@@ -57,7 +55,6 @@ static func deserialize(data:Dictionary) -> ParsedGDScriptFunction:
     function.is_static = data["is_static"]
     function.is_virtual = data["is_virtual"]
     function.is_editor = data["is_editor"]
-    function.is_coroutine = data["is_coroutine"]
 
 
     return function
@@ -71,8 +68,7 @@ func serialize() -> Dictionary:
         "is_default" : is_default,
         "is_static" : is_static,
         "is_virtual" : is_virtual,
-        "is_editor" : is_editor,
-        "is_coroutine" : is_coroutine
+        "is_editor" : is_editor
     }
 
 #------------------------------------------
@@ -113,21 +109,6 @@ func _read_line_number(script_content:PackedStringArray) -> void:
                 checked_content += script_content[i]
             if func_declaration_regex.search(checked_content):
                 function_line_number = line_n
-                break;
-
-func _read_function_coroutine(script_content:PackedStringArray) -> void:
-    if function_line_number != -1:
-        for line_n in range(function_line_number + 1, script_content.size()):
-            var line:String = script_content[line_n]
-            if not line.begins_with(" ") and not line.begins_with("\t"):
-                # Fin de la méthode
-                break
-            var stripped_line:String = line.strip_edges(true, true)
-            if stripped_line.begins_with("#"):
-                # Commentaire!
-                continue
-            is_coroutine = line.find("await") != -1
-            if is_coroutine:
                 break
 
 func _read_function_arguments(data:Dictionary) -> void:

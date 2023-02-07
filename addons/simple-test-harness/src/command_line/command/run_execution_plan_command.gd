@@ -63,8 +63,7 @@ func _create_runner_descriptor(test_case:TestCasePlan) -> TestCaseRunnerDescript
         descriptor.test_case_test_methods.append({
             "name" : method_plan.test_method_name,
             "line_number" : method_plan.test_method_line_number,
-            "arg_count" : method_plan.test_method_arguments_count,
-            "is_coroutine" : method_plan.is_coroutine
+            "arg_count" : method_plan.test_method_arguments_count
         })
     return descriptor
 

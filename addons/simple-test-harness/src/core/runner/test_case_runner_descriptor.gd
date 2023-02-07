@@ -20,8 +20,7 @@ var test_case_has_default_constructor:bool
 # {
 #     "name" : "aaaa",
 #     "line_number" : 42,
-#     "arg_count" : 0,
-#     "is_coroutine" : true/false
+#     "arg_count" : 0
 # }
 var test_case_test_methods:Array[Dictionary] = []
 
