@@ -41,7 +41,7 @@ func finalize() -> void:
     if _plugin.get_editor_interface().get_script_editor().editor_script_changed.is_connected(_on_editor_script_changed):
         _plugin.get_editor_interface().get_script_editor().editor_script_changed.disconnect(_on_editor_script_changed)
 
-    if _current_script_editor_popup_menu:
+    if is_instance_valid(_current_script_editor_popup_menu):
         if _current_script_editor_popup_menu.about_to_popup.is_connected(on_script_editor_popup_menu_showing):
             _current_script_editor_popup_menu.about_to_popup.disconnect(on_script_editor_popup_menu_showing)
         if _current_script_editor_popup_menu.id_pressed.is_connected(on_script_editor_popup_menu_id_selected):
@@ -57,7 +57,7 @@ func finalize() -> void:
 #------------------------------------------
 
 func _on_editor_script_changed(script) -> void:
-    if _current_script_editor_popup_menu:
+    if is_instance_valid(_current_script_editor_popup_menu):
         _current_script_editor_popup_menu.set_meta("is_on_testcase", false)
         if _current_script_editor_popup_menu.about_to_popup.is_connected(on_script_editor_popup_menu_showing):
             _current_script_editor_popup_menu.about_to_popup.disconnect(on_script_editor_popup_menu_showing)

@@ -57,13 +57,13 @@ func initialize() -> void:
         _initialize_popup_menu(_fs_item_list_popup_menu, _fs_item_list)
 
 func finalize() -> void:
-    if _fs_tree_popup_menu:
+    if is_instance_valid(_fs_tree_popup_menu):
         if _fs_tree_popup_menu.about_to_popup.is_connected(_on_fs_menu_showing):
             _fs_tree_popup_menu.about_to_popup.disconnect(_on_fs_menu_showing)
         if _fs_tree_popup_menu.close_requested.is_connected(_on_fs_menu_closing):
             _fs_tree_popup_menu.close_requested.disconnect(_on_fs_menu_closing)
 
-    if _fs_item_list_popup_menu:
+    if is_instance_valid(_fs_item_list_popup_menu):
         if _fs_item_list_popup_menu.about_to_popup.is_connected(_on_fs_menu_showing):
             _fs_item_list_popup_menu.about_to_popup.disconnect(_on_fs_menu_showing)
         if _fs_item_list_popup_menu.close_requested.is_connected(_on_fs_menu_closing):
