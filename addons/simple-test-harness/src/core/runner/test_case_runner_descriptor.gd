@@ -1,4 +1,4 @@
-class_name TestCaseAssertionReport
+class_name TestCaseRunnerDescriptor
 extends RefCounted
 
 #------------------------------------------
@@ -13,9 +13,17 @@ extends RefCounted
 # Variables publiques
 #------------------------------------------
 
-var is_success:bool
-var line_number:int = -1
-var description:String
+var test_case_name:String
+var test_case_path:String
+var test_case_has_default_constructor:bool
+# Format
+# {
+#     "name" : "aaaa",
+#     "line_number" : 42,
+#     "arg_count" : 0,
+#     "is_coroutine" : true/false
+# }
+var test_case_test_methods:Array[Dictionary] = []
 
 #------------------------------------------
 # Variables privées
@@ -24,20 +32,6 @@ var description:String
 #------------------------------------------
 # Fonctions Godot redéfinies
 #------------------------------------------
-
-static func deserialize(data:Dictionary) -> TestCaseAssertionReport:
-    var assertion_report:TestCaseAssertionReport = TestCaseAssertionReport.new()
-    assertion_report.is_success = data["is_success"]
-    assertion_report.line_number = data["line_number"]
-    assertion_report.description = data["description"]
-    return assertion_report
-
-func serialize() -> Dictionary:
-    return {
-        "is_success" : is_success,
-        "line_number" : line_number,
-        "description" : description
-    }
 
 #------------------------------------------
 # Fonctions publiques

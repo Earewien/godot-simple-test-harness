@@ -53,6 +53,12 @@ func assert_null(value:Variant) -> void:
 func assert_not_null(value:Variant) -> void:
     assert_that(value).is_not_null()
 
+func assert_equals(expected:Variant, value:Variant) -> void:
+    assert_that(value).is_equal_to(expected)
+
+func assert_not_equals(expected:Variant, value:Variant) -> void:
+    assert_that(value).is_not_equal_to(expected)
+
 # ALL ASSERT
 func assert_that(value:Variant) -> AssertThat:
     return AssertThat.new(value, _reporter)
