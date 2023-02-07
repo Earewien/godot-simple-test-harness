@@ -66,6 +66,10 @@ func assert_that(value:Variant) -> AssertThat:
 func assert_that_int(value:int) -> AssertThatInt:
     return AssertThatInt.new(value, _reporter)
 
+# To test null values, we need to stuck to Variant and not String, as String can not be null !
+func assert_that_string(value:Variant) -> AssertThatString:
+    return AssertThatString.new(value, _reporter)
+
 #------------------------------------------
 # Fonctions privées
 #------------------------------------------
