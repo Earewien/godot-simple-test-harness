@@ -12,6 +12,7 @@ config_version=5
 
 config/name="Godot-simple-test-harness"
 config/features=PackedStringArray("4.0", "GL Compatibility")
+config/icon="res://addons/simple-test-harness/assets/icon_addon.png"
 
 [editor]
 

@@ -17,21 +17,29 @@ extends RefCounted
 # Variables privées
 #------------------------------------------
 
+var _paths:PackedStringArray
 var _headless_runner:HeadlessGodotRunner
 
 #------------------------------------------
 # Fonctions Godot redéfinies
 #------------------------------------------
 
+func _init(paths:PackedStringArray = ["res://"]) -> void:
+    _paths = paths
+
 #------------------------------------------
 # Fonctions publiques
 #------------------------------------------
 
 func execute() -> ListTestCaseReport:
+    var joinded_paths:String
+    for path in _paths:
+        joinded_paths += ProjectSettings.globalize_path(path) + ";"
+    joinded_paths = joinded_paths.substr(0, joinded_paths.length() - 1)
     var output_file:TempFile = TempFile.new("ltc")
     var arguments:PackedStringArray = [
         "--list-testcases",
-        ProjectSettings.globalize_path("res://"),
+        joinded_paths,
         "--output",
         output_file.get_file_path()
     ]
