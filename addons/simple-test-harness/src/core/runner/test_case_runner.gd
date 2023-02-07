@@ -102,11 +102,9 @@ func _execute_method(test_case_report:TestCaseReport, test_script_instance:TestC
 
         # BEFORE
         test_script_instance.beforeEach()
+
         # TEST
-        if test_method["is_coroutine"]:
-            await test_script_instance.call(test_method["name"])
-        else:
-            test_script_instance.call(test_method["name"])
+        await test_script_instance.call(test_method["name"])
 
         # AFTER
         test_script_instance.afterEach()
