@@ -77,9 +77,11 @@ func _on_editor_script_changed(script) -> void:
             _current_script_editor_popup_menu = _get_child_popup_menu(script_editor)
             _add_test_entries_to_menu_if_needed(_current_script_editor_popup_menu, script)
         else:
-            _remove_test_entries(_current_script_editor_popup_menu)
+            if is_instance_valid(_current_script_editor_popup_menu):
+                _remove_test_entries(_current_script_editor_popup_menu)
     else:
-        _remove_test_entries(_current_script_editor_popup_menu)
+        if is_instance_valid(_current_script_editor_popup_menu):
+            _remove_test_entries(_current_script_editor_popup_menu)
 
 func _add_test_entries_to_menu_if_needed(menu:PopupMenu, script) -> void:
     if menu == null:
