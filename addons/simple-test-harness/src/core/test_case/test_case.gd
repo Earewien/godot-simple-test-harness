@@ -70,6 +70,10 @@ func assert_that_int(value:int) -> AssertThatInt:
 func assert_that_string(value:Variant) -> AssertThatString:
     return AssertThatString.new(value, _reporter)
 
+# AWAIT
+func await_for(description:String = "") -> AwaitFor:
+    return AwaitFor.new(_reporter, description)
+
 #------------------------------------------
 # Fonctions privées
 #------------------------------------------
