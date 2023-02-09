@@ -25,9 +25,6 @@ func _exit_tree() -> void:
     if Engine.has_meta(PLUGIN_ENGINE_META):
         Engine.remove_meta(PLUGIN_ENGINE_META)
 
-#func _run_process_in_editor() -> void:
-#    get_editor_interface().play_custom_scene("res://addons/simple-test-harness/src/command_line/runner/uni_test_runner.tscn")
-
 func execute_test_cases_from_path(paths:PackedStringArray, debug_mode:bool = false) -> void:
     _report_viewer.clear_report()
     var lts_report:ListTestCaseReport = await ListTestCaseAction.new(paths).execute()
@@ -35,3 +32,24 @@ func execute_test_cases_from_path(paths:PackedStringArray, debug_mode:bool = fal
     _report_viewer.initialize_with_build_plan(bep_report)
     var rep_report:RunExecutionPlanReport = await RunExecutionPlanAction.new(bep_report).execute()
     _report_viewer.show_execution_report(rep_report)
+
+func execute_test_case_method(script_path:String, method_name:String, debug_mode:bool = false) -> void:
+    _report_viewer.clear_report()
+    # TODO do better ! ahahahhaha
+    var lts_report:ListTestCaseReport = ListTestCaseReport.new()
+    var parsed_script:ParsedGDScript = ParsedGDScript.new()
+    parsed_script.parse(ResourceLoader.load(script_path, "", ResourceLoader.CACHE_MODE_REUSE))
+    var found_parsed_function:ParsedGDScriptFunction
+    for function in parsed_script.script_functions:
+        if function.function_name == method_name:
+            found_parsed_function = function
+            break
+
+    if found_parsed_function:
+        parsed_script.script_functions = [found_parsed_function]
+        lts_report.test_cases = [parsed_script]
+
+        var bep_report:BuildExecutionPlanReport = BuildExecutionPlanAction.new(lts_report).execute()
+        _report_viewer.initialize_with_build_plan(bep_report)
+        var rep_report:RunExecutionPlanReport = await RunExecutionPlanAction.new(bep_report).execute()
+        _report_viewer.show_execution_report(rep_report)
