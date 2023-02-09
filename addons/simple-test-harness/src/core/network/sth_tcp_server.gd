@@ -1,8 +1,9 @@
+@tool
 class_name STHTCPServer
 extends Node
 
+const TCP_SESSION_SCENE:PackedScene = preload("res://addons/simple-test-harness/src/core/network/sth_tcp_client_session.tscn")
 const SERVER_PORT:int = 40774
-const MESSAGE_DELIMITER:String = "::end_of_sth_message::"
 
 #------------------------------------------
 # Signaux
@@ -25,36 +26,34 @@ signal on_client_disconnected
 #------------------------------------------
 
 var _tcp_server:TCPServer
-var _tcp_client:StreamPeerTCP
-var _tcp_client_data_buffer:String
+var _tcp_client_session:STHTCPClientSession
 
 #------------------------------------------
 # Fonctions Godot redéfinies
 #------------------------------------------
 
 func _process(delta: float) -> void:
+    if not is_instance_valid(_tcp_server):
+        # Not started yet
+        return
+
     # Handle server, should be done only once !
     if _tcp_server.is_listening():
         if _tcp_server.is_connection_available():
-            if not is_instance_valid(_tcp_client):
-                _tcp_client = _tcp_server.take_connection()
-                on_client_connected.emit()
-            else:
-                push_error("A client is already connected to STH server.")
+            if not is_instance_valid(_tcp_client_session):
+                _tcp_client_session = TCP_SESSION_SCENE.instantiate()
+                _tcp_client_session.set_peer(_tcp_server.take_connection())
 
-    # Handle client
-    if  is_instance_valid(_tcp_client):
-        var available_bytes:int = _tcp_client.get_available_bytes()
-        if available_bytes > 0:
-            # Knock, knock, who is there ?
-            # Using get_partial_data since get_data blocks if there are less available (even if should never happen)
-            # result is an array : [result_code(int), data(array)]
-            var result:Array = _tcp_client.get_partial_data(available_bytes)
-            if result[0] == OK:
-                _tcp_client_data_buffer += result[1].get_string_from_ascii()
-                _try_do_read_full_data_from_buffer()
+                _tcp_client_session.on_connection.connect(_on_session_connected)
+                _tcp_client_session.on_message_received.connect(_on_session_message_received)
+                _tcp_client_session.on_disconnection.connect(_on_session_disconnected)
+                add_child(_tcp_client_session)
             else:
-                push_error("Error while retrieving data from client : %s" % error_string(result[0]))
+                # Consume the connection anyway, and close it
+                push_error("A client is already connected to STH server. Connection rejected")
+                var connection:= _tcp_server.take_connection()
+                connection.disconnect_from_host()
+
 #------------------------------------------
 # Fonctions publiques
 #------------------------------------------
@@ -67,25 +66,34 @@ func start() -> bool:
         return false
     return true
 
-func send_data_to_client(data:String) -> void:
-    if is_instance_valid(_tcp_client):
-        _tcp_client.put_data(("%s%s" % [data, STHTCPServer.MESSAGE_DELIMITER]).to_ascii_buffer())
+func send_data(data:String) -> void:
+    if is_instance_valid(_tcp_client_session):
+        _tcp_client_session.send_data(data)
 
 func stop() -> void:
-    if is_instance_valid(_tcp_client):
-        _tcp_client.disconnect_from_host()
+    if is_instance_valid(_tcp_client_session) and _tcp_client_session.is_session_connected():
+        remove_child(_tcp_client_session)
+        _tcp_client_session.disconnect_from_host()
+        _tcp_client_session.queue_free()
+        _tcp_client_session = null
         on_client_disconnected.emit()
     if is_instance_valid(_tcp_server):
         _tcp_server.stop()
+        _tcp_server = null
 
 #------------------------------------------
 # Fonctions privées
 #------------------------------------------
 
-func _try_do_read_full_data_from_buffer() -> void:
-    var index_of_delimiter:int = _tcp_client_data_buffer.find(MESSAGE_DELIMITER)
-    while index_of_delimiter != -1:
-        var message:String = _tcp_client_data_buffer.substr(0, index_of_delimiter)
-        _tcp_client_data_buffer = _tcp_client_data_buffer.substr(index_of_delimiter + MESSAGE_DELIMITER.length())
-        index_of_delimiter = _tcp_client_data_buffer.find(MESSAGE_DELIMITER)
-        on_client_message_received.emit(message)
+func _on_session_connected() -> void:
+    on_client_connected.emit()
+
+func _on_session_message_received(message:String) -> void:
+    on_client_message_received.emit(message)
+
+func _on_session_disconnected() -> void:
+    if is_instance_valid(_tcp_client_session) and get_children().has(_tcp_client_session):
+        remove_child(_tcp_client_session)
+        _tcp_client_session.queue_free()
+        _tcp_client_session = null
+    on_client_disconnected.emit()

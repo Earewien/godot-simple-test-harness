@@ -1,5 +1,8 @@
+@tool
 class_name STHTCPClient
 extends Node
+
+const TCP_SESSION_SCENE:PackedScene = preload("res://addons/simple-test-harness/src/core/network/sth_tcp_client_session.tscn")
 
 #------------------------------------------
 # Signaux
@@ -21,76 +24,56 @@ signal on_disconnection
 # Variables privées
 #------------------------------------------
 
-var _tcp_client:StreamPeerTCP = StreamPeerTCP.new()
-var _tcp_client_data_buffer:String
-var _connected:bool = false
+var _tcp_session:STHTCPClientSession
 
 #------------------------------------------
 # Fonctions Godot redéfinies
 #------------------------------------------
-
-func _process(delta: float) -> void:
-    match _tcp_client.get_status():
-        StreamPeerTCP.STATUS_NONE:
-            pass
-        StreamPeerTCP.STATUS_CONNECTING:
-            var poll_error:int = _tcp_client.poll()
-            if poll_error != OK:
-                push_error("Poll failed : %s" % error_string(poll_error))
-        StreamPeerTCP.STATUS_CONNECTED:
-            if not _connected:
-                _connected = true
-                on_connection.emit()
-
-            var poll_error:int = _tcp_client.poll()
-            if poll_error != OK:
-                push_error("Poll failed : %s" % error_string(poll_error))
-            var available_bytes:int = _tcp_client.get_available_bytes()
-            if available_bytes > 0:
-                var result:Array = _tcp_client.get_partial_data(available_bytes)
-                if result[0] == OK:
-                    _tcp_client_data_buffer += result[1].get_string_from_ascii()
-                    _try_do_read_full_data_from_buffer()
-                else:
-                    push_error("Fail to read data from server : %s" % error_string(result[0]))
-        StreamPeerTCP.STATUS_ERROR:
-            push_error("An error occurred while connecting to server...")
-            # We try to release if not already done
-            _tcp_client.disconnect_from_host()
-            _connected = false
-            on_disconnection.emit()
 
 #------------------------------------------
 # Fonctions publiques
 #------------------------------------------
 
 func start(host:String = "127.0.0.1", port:int = STHTCPServer.SERVER_PORT) -> bool:
-    _tcp_client = StreamPeerTCP.new()
-    var error:int = _tcp_client.connect_to_host(host, port)
+    var tcp_client:StreamPeerTCP = StreamPeerTCP.new()
+    var error:int = tcp_client.connect_to_host(host, port)
     if error == OK:
+        _tcp_session = TCP_SESSION_SCENE.instantiate()
+        _tcp_session.set_peer(tcp_client)
+
+        _tcp_session.on_connection.connect(_on_session_connected)
+        _tcp_session.on_message_received.connect(_on_session_message_received)
+        _tcp_session.on_disconnection.connect(_on_session_disconnected)
+        add_child(_tcp_session)
         return true
     else:
         push_error("Unable to connect to %s:%s : %s" % [host, port, error])
+        tcp_client.disconnect_from_host()
+        tcp_client.free()
+        tcp_client = null
         return false
 
 func send_data(data:String) -> void:
-    if is_instance_valid(_tcp_client):
-        _tcp_client.put_data(("%s%s" % [data, STHTCPServer.MESSAGE_DELIMITER]).to_ascii_buffer())
+    if is_instance_valid(_tcp_session):
+        _tcp_session.send_data(data)
 
 func stop() -> void:
-    if is_instance_valid(_tcp_client):
-        _tcp_client.disconnect_from_host()
-        if _connected:
-            _connected = false
-            on_disconnection.emit()
+    if is_instance_valid(_tcp_session) and _tcp_session.is_session_connected():
+        remove_child(_tcp_session)
+        _tcp_session.disconnect_from_host()
+        _tcp_session.queue_free()
+        _tcp_session = null
+        on_disconnection.emit()
 
 #------------------------------------------
 # Fonctions privées
 #------------------------------------------
 
-func _try_do_read_full_data_from_buffer() -> void:
-    var index_of_delimiter:int = _tcp_client_data_buffer.find(STHTCPServer.MESSAGE_DELIMITER)
-    while index_of_delimiter != -1:
-        var message:String = _tcp_client_data_buffer.substr(0, index_of_delimiter)
-        _tcp_client_data_buffer = _tcp_client_data_buffer.substr(index_of_delimiter + STHTCPServer.MESSAGE_DELIMITER.length())
-        index_of_delimiter = _tcp_client_data_buffer.find(STHTCPServer.MESSAGE_DELIMITER)
+func _on_session_connected() -> void:
+    on_connection.emit()
+
+func _on_session_message_received(message:String) -> void:
+    on_message_received.emit(message)
+
+func _on_session_disconnected() -> void:
+    stop()

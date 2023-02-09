@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dmtq0e7mldho3"]
+
+[ext_resource type="Script" path="res://addons/simple-test-harness/src/core/network/sth_tcp_client_session.gd" id="1_a6gtl"]
+
+[node name="sth_tcp_client_session" type="Node2D"]
+script = ExtResource("1_a6gtl")
