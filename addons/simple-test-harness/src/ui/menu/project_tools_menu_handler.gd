@@ -36,7 +36,7 @@ func initialize() -> void:
     _tools_popup_menu.id_pressed.connect(_on_menu_id_pressed)
 
 func finalize() -> void:
-    _plugin.remove_tool_submenu_item("Simple Test Harness")
+    _plugin.remove_tool_menu_item("Simple Test Harness")
     if is_instance_valid(_tools_popup_menu):
         _tools_popup_menu.id_pressed.disconnect(_on_menu_id_pressed)
         _tools_popup_menu.queue_free()
