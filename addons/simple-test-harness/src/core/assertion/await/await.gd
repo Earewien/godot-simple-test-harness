@@ -53,7 +53,7 @@ func poll_delay(poll_delay_seconds:float) -> AwaitFor:
 
 func until(predicate:Callable) -> void:
     # Put failed report into report stack to prevent calling this method without await keyword
-    var await_fail_report:TestCaseAssertionReport = _get_initial_await_failed_report()
+    var await_fail_report:AssertionReport = _get_initial_await_failed_report()
     _reporter.assertion_reports.append(await_fail_report)
 
     var start_tick_ms:int = Time.get_ticks_msec()
@@ -71,7 +71,7 @@ func until(predicate:Callable) -> void:
     var success:bool = condition_result and ellapsed_time_s >= _at_least_duration_seconds and ellapsed_time_s <= _at_most_duration_seconds
 
     # And proceed to real assertion
-    var report:TestCaseAssertionReport = TestCaseAssertionReport.new()
+    var report:AssertionReport = AssertionReport.new()
     report.line_number = _get_assertion_line_number()
     report.is_success = success
     var message_prefix:String = "Condition" if _description.is_empty() else "'%s'" % _description
@@ -101,7 +101,7 @@ func _until_signal_emitted(sig:Signal, check_arguments:bool = false, args:Array 
         return
 
     # Put failed report into report stack to prevent calling this method without await keyword
-    var await_fail_report:TestCaseAssertionReport = _get_initial_await_failed_report()
+    var await_fail_report:AssertionReport = _get_initial_await_failed_report()
     _reporter.assertion_reports.append(await_fail_report)
 
     # Reset state
@@ -163,7 +163,7 @@ func _until_signal_emitted(sig:Signal, check_arguments:bool = false, args:Array 
         else:
             report_description = "%s received but arguments mismatch. Expected '%s', got '%s'" % [message_prefix, args, _current_tested_signal_arguments.slice(0, args.size())]
 
-    var report:TestCaseAssertionReport = TestCaseAssertionReport.new()
+    var report:AssertionReport = AssertionReport.new()
     report.line_number = _get_assertion_line_number()
     report.is_success = global_success
     report.description = report_description
@@ -175,15 +175,15 @@ func _get_assertion_line_number() -> int:
             return stack["line"]
     return -1
 
-func _get_initial_await_failed_report() -> TestCaseAssertionReport:
-    var await_fail_report:TestCaseAssertionReport = TestCaseAssertionReport.new()
+func _get_initial_await_failed_report() -> AssertionReport:
+    var await_fail_report:AssertionReport = AssertionReport.new()
     await_fail_report.line_number = _get_assertion_line_number()
     await_fail_report.is_success = false
     await_fail_report.description = "Await utility called without 'await' keyword. Coroutin must be called within 'await'"
     return await_fail_report
 
-func _get_await_signal_too_much_arguments_failed_report() -> TestCaseAssertionReport:
-    var await_fail_report:TestCaseAssertionReport = TestCaseAssertionReport.new()
+func _get_await_signal_too_much_arguments_failed_report() -> AssertionReport:
+    var await_fail_report:AssertionReport = AssertionReport.new()
     await_fail_report.line_number = _get_assertion_line_number()
     await_fail_report.is_success = false
     await_fail_report.description = "Await signal emitted with args supports maximum 5 arguments"

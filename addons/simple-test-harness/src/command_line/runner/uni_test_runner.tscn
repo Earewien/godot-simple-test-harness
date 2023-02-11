@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://b1nh7knsmh2l5"]
-
-[ext_resource type="Script" path="res://addons/simple-test-harness/src/command_line/runner/uni_test_runner.gd" id="1_eiy3b"]
-
-[node name="UnitTestRunner" type="Node2D"]
-script = ExtResource("1_eiy3b")

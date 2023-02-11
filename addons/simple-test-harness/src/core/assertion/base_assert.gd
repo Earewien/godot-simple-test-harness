@@ -37,7 +37,7 @@ func _init(value:Variant, reporter:AssertionReporter) -> void:
 #------------------------------------------
 
 func _do_report(predicate:Callable, desc_success:String, desc_failure:String = desc_success) -> void:
-    var report:TestCaseAssertionReport = TestCaseAssertionReport.new()
+    var report:AssertionReport = AssertionReport.new()
     report.is_success = predicate.call()
     report.line_number = _get_assertion_line_number()
     report.description = desc_success if report.is_success else desc_failure

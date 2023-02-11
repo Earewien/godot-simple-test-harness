@@ -1,4 +1,4 @@
-class_name AssertionReporter
+class_name STHTestsuiteFinished
 extends RefCounted
 
 #------------------------------------------
@@ -13,36 +13,38 @@ extends RefCounted
 # Variables publiques
 #------------------------------------------
 
-var assertion_reports:Array[AssertionReport] = []
-var test_method_name:String
+var aborted:bool
+var finish_datetime:String
+var duration_ms:int
 
 #------------------------------------------
 # Variables privées
 #------------------------------------------
 
-
 #------------------------------------------
 # Fonctions Godot redéfinies
 #------------------------------------------
-
-func _init(tmn:String) -> void:
-    test_method_name = tmn
 
 #------------------------------------------
 # Fonctions publiques
 #------------------------------------------
 
-func has_failures() -> bool:
-    return get_first_report_failure() != null
+static func deserialize(data:Dictionary) ->  STHTestsuiteFinished:
+    var message:STHTestsuiteFinished = STHTestsuiteFinished.new()
+    message.aborted = data["aborted"]
+    message.finish_datetime = data["finish_datetime"]
+    message.duration_ms = data["duration_ms"]
+    return message
 
-func get_first_report_failure() -> AssertionReport:
-    for report in assertion_reports:
-        if not report.is_success:
-            return report
-    return null
+func serialize() -> Dictionary:
+    return {
+        "aborted" : aborted,
+        "finish_datetime" : finish_datetime,
+        "duration_ms" : duration_ms
+    }
 
-func reset() -> void:
-    assertion_reports.clear()
+func get_type() -> String:
+    return "STHTestsuiteFinished"
 
 #------------------------------------------
 # Fonctions privées

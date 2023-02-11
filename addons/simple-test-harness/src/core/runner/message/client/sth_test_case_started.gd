@@ -1,4 +1,4 @@
-class_name TestCaseAssertionReport
+class_name STHTestCaseStarted
 extends RefCounted
 
 #------------------------------------------
@@ -13,9 +13,8 @@ extends RefCounted
 # Variables publiques
 #------------------------------------------
 
-var is_success:bool
-var line_number:int = -1
-var description:String
+var test_case_name:String
+var test_case_path:String
 
 #------------------------------------------
 # Variables privées
@@ -25,19 +24,20 @@ var description:String
 # Fonctions Godot redéfinies
 #------------------------------------------
 
-static func deserialize(data:Dictionary) -> TestCaseAssertionReport:
-    var assertion_report:TestCaseAssertionReport = TestCaseAssertionReport.new()
-    assertion_report.is_success = data["is_success"]
-    assertion_report.line_number = data["line_number"]
-    assertion_report.description = data["description"]
-    return assertion_report
+static func deserialize(data:Dictionary) ->  STHTestCaseStarted:
+    var message:STHTestCaseStarted = STHTestCaseStarted.new()
+    message.test_case_name = data["test_case_name"]
+    message.test_case_path = data["test_case_path"]
+    return message
 
 func serialize() -> Dictionary:
     return {
-        "is_success" : is_success,
-        "line_number" : line_number,
-        "description" : description
+        "test_case_name" : test_case_name,
+        "test_case_path" : test_case_path
     }
+
+func get_type() -> String:
+    return "STHTestCaseStarted"
 
 #------------------------------------------
 # Fonctions publiques

@@ -69,7 +69,7 @@ func _process(delta: float) -> void:
 
 func set_peer(peer:StreamPeerTCP) -> void:
     _peer = peer
-    _peer.set_no_delay(true)
+#    _peer.set_no_delay(true)
 
 func is_session_connected() -> bool:
     return _connected

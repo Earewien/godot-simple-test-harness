@@ -1,4 +1,4 @@
-class_name BuildExecutionPlanAction
+class_name STHTestCaseAssertionReport
 extends RefCounted
 
 #------------------------------------------
@@ -13,37 +13,40 @@ extends RefCounted
 # Variables publiques
 #------------------------------------------
 
+var is_success:bool
+var line_number:int = -1
+var description:String
+
 #------------------------------------------
 # Variables privées
 #------------------------------------------
-
-var _test_case_report:ListTestCaseReport
 
 #------------------------------------------
 # Fonctions Godot redéfinies
 #------------------------------------------
 
-func _init(test_case_report:ListTestCaseReport) -> void:
-    _test_case_report = test_case_report
+static func deserialize(data:Dictionary) -> STHTestCaseAssertionReport:
+    var report:STHTestCaseAssertionReport = STHTestCaseAssertionReport.new()
+    report.is_success = data["is_success"]
+    report.line_number = data["line_number"]
+    report.description = data["description"]
+    return report
+
+func serialize() -> Dictionary:
+    return {
+        "is_success" : is_success,
+        "line_number" : line_number,
+        "description" : description
+    }
+
+func get_type() -> String:
+    return "STHTestCaseAssertionReport"
 
 #------------------------------------------
 # Fonctions publiques
 #------------------------------------------
 
-func execute() -> BuildExecutionPlanReport:
-    var report:BuildExecutionPlanReport = BuildExecutionPlanReport.new()
-    report.test_case_plan = _get_execution_plan()
-    return report
-
 #------------------------------------------
 # Fonctions privées
 #------------------------------------------
 
-func _get_execution_plan() -> Array[TestCasePlan]:
-    var plan:Array[TestCasePlan] = []
-    for parsed_test_case in _test_case_report.test_cases:
-        var test_case_plan:TestCasePlan = TestCasePlan.from(parsed_test_case)
-        if test_case_plan.has_test_methods():
-            plan.append(test_case_plan)
-
-    return plan

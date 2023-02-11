@@ -1,4 +1,4 @@
-class_name TestCaseMethodPlan
+class_name STHTestCaseMethodPlan
 extends RefCounted
 
 #------------------------------------------
@@ -26,16 +26,16 @@ var test_method_returned_type:int
 # Fonctions Godot redéfinies
 #------------------------------------------
 
-static func from(function:ParsedGDScriptFunction) -> TestCaseMethodPlan:
-    var method_plan:TestCaseMethodPlan = TestCaseMethodPlan.new()
-    method_plan.test_method_name = function.function_name
-    method_plan.test_method_line_number = function.function_line_number
-    method_plan.test_method_arguments_count = function.function_arguments.size()
-    method_plan.test_method_returned_type = function.function_returned_type
+static func from_parsed_function(parsed_function:ParsedGDScriptFunction) -> STHTestCaseMethodPlan:
+    var method_plan:STHTestCaseMethodPlan = STHTestCaseMethodPlan.new()
+    method_plan.test_method_name = parsed_function.function_name
+    method_plan.test_method_line_number = parsed_function.function_line_number
+    method_plan.test_method_arguments_count = parsed_function.function_arguments.size()
+    method_plan.test_method_returned_type = parsed_function.function_returned_type
     return method_plan
 
-static func deserialize(data:Dictionary) -> TestCaseMethodPlan:
-    var method_plan:TestCaseMethodPlan = TestCaseMethodPlan.new()
+static func deserialize(data:Dictionary) -> STHTestCaseMethodPlan:
+    var method_plan:STHTestCaseMethodPlan = STHTestCaseMethodPlan.new()
     method_plan.test_method_name = data["test_method_name"]
     method_plan.test_method_line_number = data["test_method_line_number"]
     method_plan.test_method_arguments_count = data["test_method_arguments_count"]

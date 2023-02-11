@@ -1,4 +1,4 @@
-class_name ListTestCaseReport
+class_name STHTestsuiteClientReady
 extends RefCounted
 
 #------------------------------------------
@@ -13,8 +13,6 @@ extends RefCounted
 # Variables publiques
 #------------------------------------------
 
-var test_cases:Array[ParsedGDScript] = []
-
 #------------------------------------------
 # Variables privées
 #------------------------------------------
@@ -27,16 +25,15 @@ var test_cases:Array[ParsedGDScript] = []
 # Fonctions publiques
 #------------------------------------------
 
-static func deserialize(data:Dictionary) -> ListTestCaseReport:
-    var report:ListTestCaseReport = ListTestCaseReport.new()
-    for stc in data["test_cases"]:
-        report.test_cases.append(ParsedGDScript.deserialize(stc))
-    return report
+static func deserialize(data:Dictionary) ->  STHTestsuiteClientReady:
+    var message:STHTestsuiteClientReady = STHTestsuiteClientReady.new()
+    return message
 
 func serialize() -> Dictionary:
-    return {
-        "test_cases" : test_cases.map(func(tc):return tc.serialize())
-    }
+    return { }
+
+func get_type() -> String:
+    return "STHTestsuiteClientReady"
 
 #------------------------------------------
 # Fonctions privées

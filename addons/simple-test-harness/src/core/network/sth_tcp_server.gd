@@ -37,16 +37,17 @@ func _process(delta: float) -> void:
         # Not started yet
         return
 
+
     # Handle server, should be done only once !
     if _tcp_server.is_listening():
         if _tcp_server.is_connection_available():
             if not is_instance_valid(_tcp_client_session):
                 _tcp_client_session = TCP_SESSION_SCENE.instantiate()
-                _tcp_client_session.set_peer(_tcp_server.take_connection())
-
                 _tcp_client_session.on_connection.connect(_on_session_connected)
                 _tcp_client_session.on_message_received.connect(_on_session_message_received)
                 _tcp_client_session.on_disconnection.connect(_on_session_disconnected)
+                _tcp_client_session.set_peer(_tcp_server.take_connection())
+
                 add_child(_tcp_client_session)
             else:
                 # Consume the connection anyway, and close it
@@ -58,9 +59,9 @@ func _process(delta: float) -> void:
 # Fonctions publiques
 #------------------------------------------
 
-func start() -> bool:
+func start(port:int = SERVER_PORT) -> bool:
     _tcp_server = TCPServer.new()
-    var error:int = _tcp_server.listen(SERVER_PORT, "127.0.0.1")
+    var error:int = _tcp_server.listen(port, "127.0.0.1")
     if error != OK:
         push_error("Unable to start STH server : %s" % error_string(error))
         return false

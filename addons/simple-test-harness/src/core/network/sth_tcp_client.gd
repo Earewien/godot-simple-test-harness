@@ -34,9 +34,9 @@ var _tcp_session:STHTCPClientSession
 # Fonctions publiques
 #------------------------------------------
 
-func start(host:String = "127.0.0.1", port:int = STHTCPServer.SERVER_PORT) -> bool:
+func start(port:int = STHTCPServer.SERVER_PORT) -> bool:
     var tcp_client:StreamPeerTCP = StreamPeerTCP.new()
-    var error:int = tcp_client.connect_to_host(host, port)
+    var error:int = tcp_client.connect_to_host("127.0.0.1", port)
     if error == OK:
         _tcp_session = TCP_SESSION_SCENE.instantiate()
         _tcp_session.set_peer(tcp_client)
@@ -47,7 +47,7 @@ func start(host:String = "127.0.0.1", port:int = STHTCPServer.SERVER_PORT) -> bo
         add_child(_tcp_session)
         return true
     else:
-        push_error("Unable to connect to %s:%s : %s" % [host, port, error])
+        push_error("Unable to connect to 127.0.0.1:%s : %s" % [port, error])
         tcp_client.disconnect_from_host()
         tcp_client.free()
         tcp_client = null

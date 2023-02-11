@@ -1,4 +1,4 @@
-class_name AssertionReporter
+class_name STHRunSingleTestCommand
 extends RefCounted
 
 #------------------------------------------
@@ -13,36 +13,35 @@ extends RefCounted
 # Variables publiques
 #------------------------------------------
 
-var assertion_reports:Array[AssertionReport] = []
-var test_method_name:String
+var test_case_path:String
+var test_case_method_name:String
 
 #------------------------------------------
 # Variables privées
 #------------------------------------------
 
-
 #------------------------------------------
 # Fonctions Godot redéfinies
 #------------------------------------------
 
-func _init(tmn:String) -> void:
-    test_method_name = tmn
+static func deserialize(data:Dictionary) ->  STHRunSingleTestCommand:
+    var command:STHRunSingleTestCommand = STHRunSingleTestCommand.new()
+    command.test_case_path = data["test_case_path"]
+    command.test_case_method_name = data["test_case_method_name"]
+    return command
+
+func serialize() -> Dictionary:
+    return {
+        "test_case_path" : test_case_path,
+        "test_case_method_name" : test_case_method_name
+    }
+
+func get_type() -> String:
+    return "STHRunSingleTestCommand"
 
 #------------------------------------------
 # Fonctions publiques
 #------------------------------------------
-
-func has_failures() -> bool:
-    return get_first_report_failure() != null
-
-func get_first_report_failure() -> AssertionReport:
-    for report in assertion_reports:
-        if not report.is_success:
-            return report
-    return null
-
-func reset() -> void:
-    assertion_reports.clear()
 
 #------------------------------------------
 # Fonctions privées

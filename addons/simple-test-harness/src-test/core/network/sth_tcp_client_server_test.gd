@@ -1,5 +1,8 @@
 extends TestCase
 
+# Cannot used plugin default port since it's in use when running tests :)
+const TEST_PORT:int = 9999
+
 var _tcp_server:STHTCPServer
 var _tcp_client:STHTCPClient
 
@@ -48,8 +51,8 @@ func afterEach() -> void:
 #------------------------------------------
 
 func test_server_and_client_connection_and_disconnection_signals() -> void:
-    _tcp_server.start()
-    _tcp_client.start()
+    _tcp_server.start(TEST_PORT)
+    _tcp_client.start(TEST_PORT)
 
     await await_until_client_connected()
     await await_until_server_client_connected()
@@ -60,10 +63,10 @@ func test_server_and_client_connection_and_disconnection_signals() -> void:
     await await_until_server_client_disconnected()
 
 func test_client_can_reconnect_to_server_multiple_times() -> void:
-    _tcp_server.start()
+    _tcp_server.start(TEST_PORT)
 
     for i in 5:
-        _tcp_client.start()
+        _tcp_client.start(TEST_PORT)
 
         await await_until_client_connected()
         _tcp_client.stop()
@@ -71,8 +74,8 @@ func test_client_can_reconnect_to_server_multiple_times() -> void:
         await await_until_server_client_disconnected()
 
 func test_client_can_send_message_to_server() -> void:
-    _tcp_server.start()
-    _tcp_client.start()
+    _tcp_server.start(TEST_PORT)
+    _tcp_client.start(TEST_PORT)
 
     await await_until_client_connected()
     _tcp_client.send_data("Hello from client !")
@@ -80,8 +83,8 @@ func test_client_can_send_message_to_server() -> void:
     await await_message_received_by_server("Hello from client !")
 
 func test_server_can_send_message_to_client() -> void:
-    _tcp_server.start()
-    _tcp_client.start()
+    _tcp_server.start(TEST_PORT)
+    _tcp_client.start(TEST_PORT)
 
     await await_until_client_connected()
     _tcp_server.send_data("Hello from server !")
@@ -89,8 +92,8 @@ func test_server_can_send_message_to_client() -> void:
     await await_message_received_by_client("Hello from server !")
 
 func test_client_can_send_lot_of_messages_to_server_in_right_order() -> void:
-    _tcp_server.start()
-    _tcp_client.start()
+    _tcp_server.start(TEST_PORT)
+    _tcp_client.start(TEST_PORT)
 
     await await_until_client_connected()
 

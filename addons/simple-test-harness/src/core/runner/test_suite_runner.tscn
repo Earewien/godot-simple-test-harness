@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://cyblkhkwqawrg"]
+
+[ext_resource type="Script" path="res://addons/simple-test-harness/src/core/runner/test_suite_runner.gd" id="1_kyjpw"]
+[ext_resource type="PackedScene" uid="uid://brkcf88nufocb" path="res://addons/simple-test-harness/src/core/network/sth_tcp_client.tscn" id="2_0tnhj"]
+
+[node name="test_suite_runner" type="Node2D"]
+script = ExtResource("1_kyjpw")
+
+[node name="sth_tcp_client" parent="." instance=ExtResource("2_0tnhj")]

@@ -1,4 +1,4 @@
-class_name RunExecutionPlanReport
+class_name STHTestsuitePlanReady
 extends RefCounted
 
 #------------------------------------------
@@ -13,9 +13,7 @@ extends RefCounted
 # Variables publiques
 #------------------------------------------
 
-var execution_date_time:String
-var execution_time_ms:int
-var test_case_reports:Array[TestCaseReport] = []
+var plan:STHExecutionPlan
 
 #------------------------------------------
 # Variables privées
@@ -29,20 +27,18 @@ var test_case_reports:Array[TestCaseReport] = []
 # Fonctions publiques
 #------------------------------------------
 
-static func deserialize(data:Dictionary) -> RunExecutionPlanReport:
-    var report:RunExecutionPlanReport = RunExecutionPlanReport.new()
-    report.execution_date_time = data["execution_date_time"]
-    report.execution_time_ms = data["execution_time_ms"]
-    for stcr in data["test_case_reports"]:
-        report.test_case_reports.append(TestCaseReport.deserialize(stcr))
-    return report
+static func deserialize(data:Dictionary) ->  STHTestsuitePlanReady:
+    var message:STHTestsuitePlanReady = STHTestsuitePlanReady.new()
+    message.plan = STHExecutionPlan.deserialize(data["plan"])
+    return message
 
 func serialize() -> Dictionary:
     return {
-        "execution_date_time": execution_date_time,
-        "execution_time_ms" : execution_time_ms,
-        "test_case_reports" : test_case_reports.map(func(tcr):return tcr.serialize())
+        "plan" : plan.serialize()
     }
+
+func get_type() -> String:
+    return "STHTestsuitePlanReady"
 
 #------------------------------------------
 # Fonctions privées
