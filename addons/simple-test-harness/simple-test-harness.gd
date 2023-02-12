@@ -11,6 +11,7 @@ var _report_viewer:Control
 var _tcp_server:STHTCPServer
 
 var _orchestrator:STHOrchestrator
+var _headless_runner:HeadlessTestSuiteRunner
 
 func _enter_tree() -> void:
     if not Engine.has_meta(PLUGIN_ENGINE_META):
@@ -61,8 +62,29 @@ func _exit_tree() -> void:
 
 func execute_test_cases_from_path(paths:PackedStringArray, debug_mode:bool = false) -> void:
     _orchestrator.run_test_suite_from_paths(paths)
-    get_editor_interface().play_custom_scene("res://addons/simple-test-harness/src/core/runner/test_suite_runner.tscn")
+    _launch_test_runner(debug_mode)
 
 func execute_test_case_method(script_path:String, method_name:String, debug_mode:bool = false) -> void:
     _orchestrator.run_test_test_case_method(script_path, method_name)
-    get_editor_interface().play_custom_scene("res://addons/simple-test-harness/src/core/runner/test_suite_runner.tscn")
+    _launch_test_runner(debug_mode)
+
+func _launch_test_runner(degub_mode:bool) -> void:
+    # In debug mode, directly play a scene, since we can benefit from godot debugger (breakpoints and all)
+    # Without debug, we use the headless runner
+    # TODO in debug mode : add a debugger plugin, to inspect breaks ; if its breaksq on an error, test is a failure
+    if degub_mode:
+        get_editor_interface().play_custom_scene("res://addons/simple-test-harness/src/core/runner/test_suite_runner.tscn")
+    else:
+        if is_instance_valid(_headless_runner):
+            # Should never happen
+            push_error("Cannot launch another headless runner")
+            return
+
+        _headless_runner = HeadlessTestSuiteRunner.new()
+        _headless_runner.on_process_terminated.connect(_on_headless_runner_terminated, Node.CONNECT_ONE_SHOT)
+        _headless_runner.start()
+
+func _on_headless_runner_terminated(exit_code:int) -> void:
+    if exit_code != 0:
+        push_error("Headless runnner exited with code %s" % exit_code)
+    _headless_runner = null

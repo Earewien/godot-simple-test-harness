@@ -1,7 +1,6 @@
-class_name HeadlessGodotRunner
+class_name HeadlessTestSuiteRunner
 extends RefCounted
 
-# TODO debug option !
 const DEFAULT_ARGS:PackedStringArray = ["--headless"]
 
 #------------------------------------------
@@ -20,7 +19,7 @@ signal on_process_terminated(code:int)
 #------------------------------------------
 
 var verbose:bool = false
-var print_process_output:bool = true
+var print_process_output:bool = false
 
 #------------------------------------------
 # Variables privées
@@ -35,13 +34,13 @@ var _execution_time:int
 # Fonctions Godot redéfinies
 #------------------------------------------
 
-func _init(args:PackedStringArray) -> void:
+func _init(args:PackedStringArray = []) -> void:
     _arguments = []
     _arguments.append_array(DEFAULT_ARGS)
     # Ne peut pas être fait dans la constante !
     _arguments.append("--path")
     _arguments.append(ProjectSettings.globalize_path("res://"))
-    _arguments.append("res://addons/simple-test-harness/src/command_line/runner/internal_task_runner.tscn")
+    _arguments.append("res://addons/simple-test-harness/src/core/runner/test_suite_runner.tscn")
     _arguments.append_array(args)
 
 #------------------------------------------
