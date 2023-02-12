@@ -1,14 +1,14 @@
-[gd_scene load_steps=2 format=3 uid="uid://dvhgsdugpusnv"]
+[gd_scene load_steps=2 format=3 uid="uid://83qxwjeocldf"]
 
-[ext_resource type="Script" path="res://addons/simple-test-harness/src/ui/report_viewer/report_viewer.gd" id="1_m1arv"]
+[ext_resource type="Script" path="res://addons/simple-test-harness/src/ui/dock/sth_dock_view.gd" id="1_x536d"]
 
 [node name="Simple Test Harness" type="Control"]
-custom_minimum_size = Vector2(200, 300)
+custom_minimum_size = Vector2(100, 200)
 layout_mode = 3
 anchors_preset = 0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-script = ExtResource("1_m1arv")
+script = ExtResource("1_x536d")
 
 [node name="ScrollContainer" type="ScrollContainer" parent="."]
 layout_mode = 1
@@ -45,6 +45,9 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+columns = 2
+column_titles_visible = true
 hide_root = true
+select_mode = 1
 
 [connection signal="pressed" from="ScrollContainer/VBoxContainer/HBoxContainer/ClearButton" to="." method="_on_clear_button_pressed"]

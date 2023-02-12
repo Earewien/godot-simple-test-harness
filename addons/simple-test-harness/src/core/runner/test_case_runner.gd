@@ -81,6 +81,8 @@ func execute(test_case_plan:STHTestCasePlan) -> void:
 #------------------------------------------
 
 func _execute_method(test_case_plan:STHTestCasePlan, test_script_instance:TestCase, test_method:STHTestCaseMethodPlan) -> void:
+    _notify_test_case_method_started(test_case_plan, test_method)
+
     var godot_log_handler:GodotLogHandler = GodotLogHandler.new()
 
     var method_report:STHTestCaseMethodReport = STHTestCaseMethodReport.new()
@@ -160,6 +162,13 @@ func _notify_test_case_started(test_case_plan:STHTestCasePlan) -> void:
     tc_started_message.test_case_name = test_case_plan.test_case_name
     tc_started_message.test_case_path = test_case_plan.test_case_path
     tcp_client.send_data(STHRunnerMessageHandler.create_message(tc_started_message))
+
+func _notify_test_case_method_started(test_case_plan:STHTestCasePlan, test_method:STHTestCaseMethodPlan) -> void:
+    var tcm_started_message:STHTestCaseMethodStarted = STHTestCaseMethodStarted.new()
+    tcm_started_message.test_case_name = test_case_plan.test_case_name
+    tcm_started_message.test_case_path = test_case_plan.test_case_path
+    tcm_started_message.test_case_method_name = test_method.test_method_name
+    tcp_client.send_data(STHRunnerMessageHandler.create_message(tcm_started_message))
 
 func _notify_test_case_method_report(report:STHTestCaseMethodReport) -> void:
     tcp_client.send_data(STHRunnerMessageHandler.create_message(report))

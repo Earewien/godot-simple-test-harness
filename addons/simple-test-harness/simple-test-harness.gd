@@ -7,7 +7,6 @@ const PLUGIN_TCP_SERVER_META:String = "STHPluginTcpServer"
 const PLUGIN_ORCHESTRATOR_META:String = "STHPluginOrchestrator"
 
 var _ui_handler:UISTHHandler
-var _report_viewer:Control
 var _tcp_server:STHTCPServer
 
 var _orchestrator:STHOrchestrator
@@ -31,15 +30,7 @@ func _enter_tree() -> void:
     _ui_handler = UISTHHandler.new()
     _ui_handler.initialize()
 
-    _report_viewer = preload("res://addons/simple-test-harness/src/ui/report_viewer/report_viewer.tscn").instantiate()
-    add_control_to_dock(EditorPlugin.DOCK_SLOT_LEFT_UR, _report_viewer)
-
-
 func _exit_tree() -> void:
-    remove_control_from_docks(_report_viewer)
-    _report_viewer.queue_free()
-    _report_viewer = null
-
     if _ui_handler:
         _ui_handler.finalize()
         _ui_handler = null

@@ -45,6 +45,8 @@ static func get_message(raw_message:String) -> Variant:
             script_type = STHTestsuiteStarted
         "STHTestCaseStarted" :
             script_type = STHTestCaseStarted
+        "STHTestCaseMethodStarted" :
+            script_type = STHTestCaseMethodStarted
         "STHTestCaseMethodReport" :
             script_type = STHTestCaseMethodReport
         "STHTestCaseFinished" :

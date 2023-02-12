@@ -1,14 +1,6 @@
-class_name IconRegistry
+class_name STHTestCaseMethodStarted
 extends RefCounted
 
-const ICON_DOCK:Texture2D = preload("res://addons/simple-test-harness/assets/icon_dock.png")
-const ICON_RUN_TEST:Texture2D = preload("res://addons/simple-test-harness/assets/icon_run_test.png")
-const ICON_DEBUG_TEST:Texture2D = preload("res://addons/simple-test-harness/assets/icon_debug_test.png")
-
-const ICON_TEST_IN_PROGRESS:Texture2D = preload("res://addons/simple-test-harness/assets/icon_test_in_progress.png")
-const ICON_TEST_SUCCESS:Texture2D = preload("res://addons/simple-test-harness/assets/icon_test_success.png")
-const ICON_TEST_SKIPPED:Texture2D = preload("res://addons/simple-test-harness/assets/icon_test_skip.png")
-const ICON_TEST_FAILED:Texture2D = preload("res://addons/simple-test-harness/assets/icon_test_fail.png")
 #------------------------------------------
 # Signaux
 #------------------------------------------
@@ -21,6 +13,10 @@ const ICON_TEST_FAILED:Texture2D = preload("res://addons/simple-test-harness/ass
 # Variables publiques
 #------------------------------------------
 
+var test_case_name:String
+var test_case_path:String
+var test_case_method_name:String
+
 #------------------------------------------
 # Variables privées
 #------------------------------------------
@@ -28,6 +24,23 @@ const ICON_TEST_FAILED:Texture2D = preload("res://addons/simple-test-harness/ass
 #------------------------------------------
 # Fonctions Godot redéfinies
 #------------------------------------------
+
+static func deserialize(data:Dictionary) ->  STHTestCaseMethodStarted:
+    var message:STHTestCaseMethodStarted = STHTestCaseMethodStarted.new()
+    message.test_case_name = data["test_case_name"]
+    message.test_case_path = data["test_case_path"]
+    message.test_case_method_name = data["test_case_method_name"]
+    return message
+
+func serialize() -> Dictionary:
+    return {
+        "test_case_name" : test_case_name,
+        "test_case_path" : test_case_path,
+        "test_case_method_name" : test_case_method_name
+    }
+
+func get_type() -> String:
+    return "STHTestCaseMethodStarted"
 
 #------------------------------------------
 # Fonctions publiques
