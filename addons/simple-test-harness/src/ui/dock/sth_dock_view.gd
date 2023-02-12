@@ -3,6 +3,7 @@ class_name STHDockView
 extends Control
 
 const TAB_NAME:String = "Simple Test Harness"
+const ITEM_METADATA_NAME:String = "sth_meta"
 
 #------------------------------------------
 # Signaux
@@ -20,21 +21,25 @@ const TAB_NAME:String = "Simple Test Harness"
 # Variables privées
 #------------------------------------------
 
+var _plugin:SimpleTestHarnessPlugin
+
 @onready var _tree:Tree = $%ReportTree
+@onready var _clear_button:TextureButton = %ClearButton
+@onready var _run_all_button:TextureButton = %RunAllButton
+@onready var _run_failed_button:TextureButton = %RunFailedButton
+
 var _tab_container:TabContainer
 
-var _plan_items:Dictionary = {}
+var _indexed_tree_items:Dictionary = {}
 
 #------------------------------------------
 # Fonctions Godot redéfinies
 #------------------------------------------
 
 func _init() -> void:
-    if not Engine.has_meta(SimpleTestHarnessPlugin.PLUGIN_ORCHESTRATOR_META):
-        push_error("Unable to get orchestrator")
+    if not Engine.has_meta(SimpleTestHarnessPlugin.PLUGIN_ENGINE_META):
         return
-
-
+    _plugin = Engine.get_meta(SimpleTestHarnessPlugin.PLUGIN_ENGINE_META)
 
 func _ready() -> void:
     _tree.set_column_title(0, "Test Cases")
@@ -45,6 +50,10 @@ func _ready() -> void:
     _tree.set_column_custom_minimum_width(0, 100)
     _tree.set_column_custom_minimum_width(1, 100)
     get_tree().create_timer(0.1).timeout.connect(_after_ready)
+
+    # Init button states
+    _run_all_button.disabled = true
+    _run_failed_button.disabled = true
 
 func _notification(what: int) -> void:
     if  what == NOTIFICATION_PREDELETE:
@@ -106,6 +115,22 @@ func _show_tab() -> void:
 func _on_clear_button_pressed() -> void:
     _clear_report()
 
+func _on_run_all_button_pressed() -> void:
+    _run_all_test_cases()
+
+func _on_run_failed_button_pressed() -> void:
+     _run_failed_test_cases()
+
+func _on_expand_button_pressed() -> void:
+    if is_instance_valid(_tree.get_root()):
+        for child in _tree.get_root().get_children():
+            child.set_collapsed_recursive(false)
+
+func _on_collapse_button_pressed() -> void:
+    if is_instance_valid(_tree.get_root()):
+        for child in _tree.get_root().get_children():
+            child.set_collapsed_recursive(true)
+
 # -------------
 # Orchestrator
 # -------------
@@ -113,10 +138,9 @@ func _on_clear_button_pressed() -> void:
 func _on_orchestrator_state_changed(state:int) -> void:
     match state:
         STHOrchestrator.ORCHESTRATOR_STATE_IDLE:
-            pass
+            _on_orchestrator_idle()
         STHOrchestrator.ORCHESTRATOR_STATE_PREPARING_TESTSUITE:
-            _clear_report()
-            _show_tab()
+            _on_orchestrator_preparing_testsuite()
         STHOrchestrator.ORCHESTRATOR_STATE_RUNNING_TESTSUITE:
             pass
 
@@ -138,8 +162,47 @@ func _on_orchestrator_runner_message_received(message) -> void:
 
 func _clear_report() -> void:
     _tree.clear()
-    for item_key in _plan_items.keys():
-        _plan_items[item_key]
+    # Explicitly free Tree Items
+    for item_key in _indexed_tree_items.keys():
+        var item = _indexed_tree_items[item_key]
+        if is_instance_valid(item):
+            print(item)
+            item.free()
+    _indexed_tree_items.clear()
+
+    # No items, no run !
+    _run_all_button.disabled = true
+    _run_failed_button.disabled = true
+
+func _on_orchestrator_idle() -> void:
+    _clear_button.disabled = false
+    _run_all_button.disabled = _indexed_tree_items.is_empty()
+    _run_failed_button.disabled = _indexed_tree_items.is_empty()
+
+func _on_orchestrator_preparing_testsuite() -> void:
+    _clear_report()
+    _show_tab()
+    _clear_button.disabled = true
+    _run_all_button.disabled = true
+    _run_failed_button.disabled = true
+
+func _run_all_test_cases() -> void:
+    # Collect all test case paths, and ask plugin to run them
+    var paths:PackedStringArray = []
+    if is_instance_valid(_tree.get_root()):
+        for test_case_item in _tree.get_root().get_children():
+            paths.append(test_case_item.get_meta(ITEM_METADATA_NAME).test_case_path)
+    _plugin.execute_test_cases_from_path(paths, false)
+
+func _run_failed_test_cases() -> void:
+    # Collect all test case paths of unsuccessful test cases, and ask plugin to run them
+    var paths:PackedStringArray = []
+    if is_instance_valid(_tree.get_root()):
+        for test_case_item in _tree.get_root().get_children():
+            var meta:TestCaseMetadata = test_case_item.get_meta(ITEM_METADATA_NAME)
+            if meta.test_case_result != STHTestCaseFinished.TEST_CASE_STATUS_SUCCESSFUL:
+                paths.append(meta.test_case_path)
+    _plugin.execute_test_cases_from_path(paths, false)
 
 # Here, we receive plan from orchestrator. Plan contains test case that are to be run,
 # and each test case contains methods that will be run too.
@@ -151,24 +214,34 @@ func _handle_testsuite_plan(plan:STHTestsuitePlanReady) -> void:
         var tc_item:TreeItem = _tree.create_item(root_item)
         tc_item.set_text(0, test_case.test_case_name)
         tc_item.set_tooltip_text(0, test_case.test_case_path)
-        _plan_items[test_case.test_case_path] = tc_item
+        var tc_metadata:TestCaseMetadata = TestCaseMetadata.new()
+        tc_metadata.test_case_name = test_case.test_case_name
+        tc_metadata.test_case_path = test_case.test_case_path
+        tc_item.set_meta(ITEM_METADATA_NAME, tc_metadata)
+        _indexed_tree_items[test_case.test_case_path] = tc_item
 
         for test_method in test_case.test_case_methods:
             var tm_item:TreeItem = _tree.create_item(tc_item)
             tm_item.set_text(0, test_method.test_method_name)
             tm_item.set_tooltip_text(0, test_method.test_method_name)
-            _plan_items[test_case.test_case_path + test_method.test_method_name] = tm_item
+            var m_metadata:TestCaseMethodMetadata = TestCaseMethodMetadata.new()
+            m_metadata.test_case_name = test_case.test_case_name
+            m_metadata.test_case_path = test_case.test_case_path
+            m_metadata.test_case_method_name = test_method.test_method_name
+            m_metadata.test_case_method_line_number = test_method.test_method_line_number
+            tm_item.set_meta(ITEM_METADATA_NAME, m_metadata)
+            _indexed_tree_items[test_case.test_case_path + test_method.test_method_name] = tm_item
 
 # Here, a test case is starting. Pass its state to started
 func _handle_test_case_started(message:STHTestCaseStarted) -> void:
-    var test_case_item:TreeItem = _plan_items[message.test_case_path]
+    var test_case_item:TreeItem = _indexed_tree_items[message.test_case_path]
 
     if test_case_item:
         test_case_item.set_icon(0, IconRegistry.ICON_TEST_IN_PROGRESS)
 
 # Here, a test case method is starting. Pass its state to started
 func _handle_test_case_method_started(message:STHTestCaseMethodStarted) -> void:
-    var method_item:TreeItem = _plan_items[message.test_case_path + message.test_case_method_name]
+    var method_item:TreeItem = _indexed_tree_items[message.test_case_path + message.test_case_method_name]
 
     if method_item:
         method_item.set_icon(0, IconRegistry.ICON_TEST_IN_PROGRESS)
@@ -176,12 +249,13 @@ func _handle_test_case_method_started(message:STHTestCaseMethodStarted) -> void:
 # Here, we start receiving test reports. A report is about a method in a test case
 # Each report contains assertions reports. We had them as child of method item
 func _handle_test_case_method_report(report:STHTestCaseMethodReport) -> void:
-    var method_item:TreeItem = _plan_items[report.test_case_path + report.method_name]
+    var method_item:TreeItem = _indexed_tree_items[report.test_case_path + report.method_name]
 
     if method_item:
         method_item.set_text(1, str(report.execution_time_ms))
         method_item.set_text_alignment(1, HORIZONTAL_ALIGNMENT_RIGHT)
         method_item.set_suffix(1, "ms")
+        method_item.get_meta(ITEM_METADATA_NAME).test_case_method_result = report.result
 
         if report.is_successful():
             method_item.set_icon(0, IconRegistry.ICON_TEST_SUCCESS)
@@ -210,12 +284,13 @@ func _handle_test_case_method_report(report:STHTestCaseMethodReport) -> void:
     _tree.scroll_to_item(method_item)
 
 func _handle_test_case_finished(message:STHTestCaseFinished) -> void:
-    var test_case_item:TreeItem = _plan_items[message.test_case_path]
+    var test_case_item:TreeItem = _indexed_tree_items[message.test_case_path]
 
     if test_case_item:
         test_case_item.set_text(1, str(message.test_case_execution_time_ms))
         test_case_item.set_text_alignment(1, HORIZONTAL_ALIGNMENT_RIGHT)
         test_case_item.set_suffix(1, "ms")
+        test_case_item.get_meta(ITEM_METADATA_NAME).test_case_result = message.test_case_status
 
         match message.test_case_status:
             STHTestCaseFinished.TEST_CASE_STATUS_SUCCESSFUL:
@@ -229,3 +304,19 @@ func _handle_test_case_finished(message:STHTestCaseFinished) -> void:
 
         if message.test_case_status == STHTestCaseFinished.TEST_CASE_STATUS_SUCCESSFUL:
             test_case_item.set_collapsed_recursive(true)
+
+# -------------
+# Metadata classes
+# -------------
+
+class TestCaseMetadata extends RefCounted:
+    var test_case_name:String
+    var test_case_path:String
+    var test_case_result:int
+
+class TestCaseMethodMetadata extends RefCounted:
+    var test_case_name:String
+    var test_case_path:String
+    var test_case_method_name:String
+    var test_case_method_line_number:int
+    var test_case_method_result:int

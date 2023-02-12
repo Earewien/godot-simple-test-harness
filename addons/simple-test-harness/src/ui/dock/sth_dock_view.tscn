@@ -1,9 +1,24 @@
-[gd_scene load_steps=2 format=3 uid="uid://83qxwjeocldf"]
+[gd_scene load_steps=17 format=3 uid="uid://83qxwjeocldf"]
 
 [ext_resource type="Script" path="res://addons/simple-test-harness/src/ui/dock/sth_dock_view.gd" id="1_x536d"]
+[ext_resource type="Texture2D" uid="uid://du7rwah88se3e" path="res://addons/simple-test-harness/assets/icon_dock_trash.png" id="2_rl8nc"]
+[ext_resource type="Texture2D" uid="uid://djroc4x6gr0q4" path="res://addons/simple-test-harness/assets/icon_dock_trash_hover.png" id="3_3xsia"]
+[ext_resource type="Texture2D" uid="uid://cfc6bqqrj253c" path="res://addons/simple-test-harness/assets/icon_dock_run_all.png" id="3_aypse"]
+[ext_resource type="Texture2D" uid="uid://wtvno1w76jox" path="res://addons/simple-test-harness/assets/icon_dock_run_failed.png" id="4_nmdad"]
+[ext_resource type="Texture2D" uid="uid://btqsp7s4xlgee" path="res://addons/simple-test-harness/assets/icon_dock_trash_disabled.png" id="4_wpovc"]
+[ext_resource type="Texture2D" uid="uid://d3gm4cdgdoc3" path="res://addons/simple-test-harness/assets/icon_dock_run_all_hover.png" id="5_oioob"]
+[ext_resource type="Texture2D" uid="uid://ccj2tbpixwugr" path="res://addons/simple-test-harness/assets/icon_dock_expand.png" id="5_wjdbo"]
+[ext_resource type="Texture2D" uid="uid://43fsfbeu4ubq" path="res://addons/simple-test-harness/assets/icon_dock_collaspe.png" id="6_wxbu0"]
+[ext_resource type="Texture2D" uid="uid://c618u5bhj2d3s" path="res://addons/simple-test-harness/assets/icon_dock_run_failed_hover.png" id="7_pwlhr"]
+[ext_resource type="Texture2D" uid="uid://ctx84lwe6r2w4" path="res://addons/simple-test-harness/assets/icon_dock_run_all_disabled.png" id="7_rnrbh"]
+[ext_resource type="Texture2D" uid="uid://dbun4lfs73qhr" path="res://addons/simple-test-harness/assets/icon_dock_expand_hover.png" id="9_mqepb"]
+[ext_resource type="Texture2D" uid="uid://fjke6abyrhip" path="res://addons/simple-test-harness/assets/icon_dock_run_failed_disabled.png" id="10_nw7n5"]
+[ext_resource type="Texture2D" uid="uid://hgbwu048ylpr" path="res://addons/simple-test-harness/assets/icon_dock_collaspe_hover.png" id="11_mde5l"]
+[ext_resource type="Texture2D" uid="uid://bt1xvfmw2l78p" path="res://addons/simple-test-harness/assets/icon_dock_expand_disabled.png" id="13_yrobo"]
+[ext_resource type="Texture2D" uid="uid://sfth54u3e8kb" path="res://addons/simple-test-harness/assets/icon_dock_collaspe_disabled.png" id="16_ku2t8"]
 
 [node name="Simple Test Harness" type="Control"]
-custom_minimum_size = Vector2(100, 200)
+custom_minimum_size = Vector2(200, 200)
 layout_mode = 3
 anchors_preset = 0
 size_flags_horizontal = 3
@@ -24,21 +39,69 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="HBoxContainer" type="HBoxContainer" parent="ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 
-[node name="ClearButton" type="Button" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+[node name="ClearButton" type="TextureButton" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(28, 0)
 layout_mode = 2
-text = "Clear"
+tooltip_text = "Clear"
+texture_normal = ExtResource("2_rl8nc")
+texture_hover = ExtResource("3_3xsia")
+texture_disabled = ExtResource("4_wpovc")
+ignore_texture_size = true
+stretch_mode = 5
 
-[node name="RunAllButton" type="Button" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
-visible = false
+[node name="RunAllButton" type="TextureButton" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(28, 0)
 layout_mode = 2
-text = "Run All"
+tooltip_text = "Run all tests"
+disabled = true
+texture_normal = ExtResource("3_aypse")
+texture_hover = ExtResource("5_oioob")
+texture_disabled = ExtResource("7_rnrbh")
+ignore_texture_size = true
+stretch_mode = 5
 
-[node name="RunFailedButton" type="Button" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
-visible = false
+[node name="RunFailedButton" type="TextureButton" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(28, 0)
 layout_mode = 2
-text = "RunFailed"
+tooltip_text = "Run failed test cases"
+disabled = true
+texture_normal = ExtResource("4_nmdad")
+texture_hover = ExtResource("7_pwlhr")
+texture_disabled = ExtResource("10_nw7n5")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="Spacer" type="Control" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ExpandButton" type="TextureButton" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(28, 0)
+layout_mode = 2
+tooltip_text = "Expand all"
+texture_normal = ExtResource("5_wjdbo")
+texture_hover = ExtResource("9_mqepb")
+texture_disabled = ExtResource("13_yrobo")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="CollapseButton" type="TextureButton" parent="ScrollContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(28, 0)
+layout_mode = 2
+tooltip_text = "Collapse all"
+texture_normal = ExtResource("6_wxbu0")
+texture_hover = ExtResource("11_mde5l")
+texture_disabled = ExtResource("16_ku2t8")
+ignore_texture_size = true
+stretch_mode = 5
 
 [node name="ReportTree" type="Tree" parent="ScrollContainer/VBoxContainer"]
 unique_name_in_owner = true
@@ -51,3 +114,7 @@ hide_root = true
 select_mode = 1
 
 [connection signal="pressed" from="ScrollContainer/VBoxContainer/HBoxContainer/ClearButton" to="." method="_on_clear_button_pressed"]
+[connection signal="pressed" from="ScrollContainer/VBoxContainer/HBoxContainer/RunAllButton" to="." method="_on_run_all_button_pressed"]
+[connection signal="pressed" from="ScrollContainer/VBoxContainer/HBoxContainer/RunFailedButton" to="." method="_on_run_failed_button_pressed"]
+[connection signal="pressed" from="ScrollContainer/VBoxContainer/HBoxContainer/ExpandButton" to="." method="_on_expand_button_pressed"]
+[connection signal="pressed" from="ScrollContainer/VBoxContainer/HBoxContainer/CollapseButton" to="." method="_on_collapse_button_pressed"]
