@@ -77,7 +77,7 @@ func _on_resource_saved(resource:Resource) -> void:
     if _plugin.get_editor_interface().get_script_editor().get_current_script() == script:
         _reload_gutter_for_script(script)
 
-func _on_editor_script_changed(script:Script) -> void:
+func _on_editor_script_changed(script) -> void:
     if not script is GDScript:
         return
 
