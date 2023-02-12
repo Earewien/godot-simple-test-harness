@@ -127,7 +127,8 @@ func _until_signal_emitted(sig:Signal, check_arguments:bool = false, args:Array 
         ellapsed_time_ms = Time.get_ticks_msec() - start_tick_ms
 
     # Stop listening to signal emission
-    sig.disconnect(signal_receiver)
+    if is_instance_valid(sig):
+        sig.disconnect(signal_receiver)
 
     # Test is done (success of failure, but done) ; we remove await failed assertion
     _reporter.assertion_reports.erase(await_fail_report)
