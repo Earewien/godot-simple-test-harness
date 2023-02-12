@@ -303,9 +303,12 @@ func _handle_test_case_method_report(report:STHTestCaseMethodReport) -> void:
                     assert_item.set_icon(0, IconRegistry.ICON_TEST_FAILED)
 
     if report.is_successful():
-        method_item.set_collapsed_recursive(true)
+        if _can_collaspe_item(method_item):
+            method_item.set_collapsed_recursive(true)
 
-    _tree.scroll_to_item(method_item)
+    # Do not scroll to item if an item is selected : if user is ready something, it's a real pain !
+    if _tree.get_selected() == null:
+        _tree.scroll_to_item(method_item)
 
 func _handle_test_case_finished(message:STHTestCaseFinished) -> void:
     var test_case_item:TreeItem = _indexed_tree_items[message.test_case_path]
@@ -327,8 +330,32 @@ func _handle_test_case_finished(message:STHTestCaseFinished) -> void:
                 test_case_item.set_icon(0, IconRegistry.ICON_TEST_FAILED)
 
         if message.test_case_status == STHTestCaseFinished.TEST_CASE_STATUS_SUCCESSFUL:
-            test_case_item.set_collapsed_recursive(true)
+            if _can_collaspe_item(test_case_item):
+                test_case_item.set_collapsed_recursive(true)
 
+func _can_collaspe_item(item:TreeItem) -> bool:
+    # Collapse only if user is not selecting something in test case report (test case or any method)
+    var can_collapse:bool = true
+    var selected_item:TreeItem = _tree.get_selected()
+    if is_instance_valid(selected_item):
+        var test_case_item:TreeItem
+        if not item.has_meta(ITEM_METADATA_NAME):
+            # Assertion, two step up
+            test_case_item = item.get_parent().get_parent()
+        else:
+            if item.get_meta(ITEM_METADATA_NAME) is TestCaseMethodMetadata:
+                # Method, one step up
+                test_case_item = item.get_parent()
+            else:
+                # Already test case
+                test_case_item = item
+        var tmp_item_parent:TreeItem = selected_item
+        while is_instance_valid(tmp_item_parent):
+            if test_case_item == tmp_item_parent:
+                can_collapse = false
+                break
+            tmp_item_parent = tmp_item_parent.get_parent()
+    return can_collapse
 # -------------
 # Metadata classes
 # -------------
