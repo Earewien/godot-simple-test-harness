@@ -139,9 +139,11 @@ func _on_report_tree_nothing_selected() -> void:
     _logs_text_edit.visible = false
 
 func _on_report_tree_item_selected() -> void:
-    var selected_item:TreeItem = _tree.get_selected()
-    if selected_item.has_meta(ITEM_METADATA_NAME):
-        var meta = selected_item.get_meta(ITEM_METADATA_NAME)
+    _update_logs_view(_tree.get_selected())
+
+func _update_logs_view(item:TreeItem) -> void:
+    if item.has_meta(ITEM_METADATA_NAME):
+        var meta = item.get_meta(ITEM_METADATA_NAME)
         if meta is TestCaseMethodMetadata:
             _logs_text_edit.visible = true
             _logs_text_edit.text = ""
@@ -309,6 +311,10 @@ func _handle_test_case_method_report(report:STHTestCaseMethodReport) -> void:
     # Do not scroll to item if an item is selected : if user is ready something, it's a real pain !
     if _tree.get_selected() == null:
         _tree.scroll_to_item(method_item)
+
+    # If item is selected, refresh logs
+    if method_item == _tree.get_selected():
+        _update_logs_view(method_item)
 
 func _handle_test_case_finished(message:STHTestCaseFinished) -> void:
     var test_case_item:TreeItem = _indexed_tree_items[message.test_case_path]
