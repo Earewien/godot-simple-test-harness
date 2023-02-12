@@ -141,6 +141,9 @@ func _on_report_tree_nothing_selected() -> void:
 func _on_report_tree_item_selected() -> void:
     _update_logs_view(_tree.get_selected())
 
+func _on_report_tree_item_activated() -> void:
+    _open_selected_item_related_script()
+
 func _update_logs_view(item:TreeItem) -> void:
     if item.has_meta(ITEM_METADATA_NAME):
         var meta = item.get_meta(ITEM_METADATA_NAME)
@@ -229,6 +232,29 @@ func _run_failed_test_cases() -> void:
                 paths.append(meta.test_case_path)
     _plugin.execute_test_cases_from_path(paths, false)
 
+func _open_selected_item_related_script() -> void:
+    var selected_item:TreeItem = _tree.get_selected()
+    if is_instance_valid(selected_item):
+        if selected_item.has_meta(ITEM_METADATA_NAME):
+            var meta = selected_item.get_meta(ITEM_METADATA_NAME)
+            var script_path:String = meta.test_case_path
+            var line_number:int = -1
+            if meta is TestCaseMethodMetadata:
+                line_number = meta.test_case_method_line_number
+            elif meta is TestCaseMethodAssertionMetadata:
+                if meta.test_case_method_assertion_line_number != -1:
+                    line_number = meta.test_case_method_line_number
+                else:
+                    line_number = selected_item.get_parent().get_meta(ITEM_METADATA_NAME).test_case_method_line_number
+
+            line_number += 1 # Maybe an index that is different ?
+            if FileAccess.file_exists(script_path):
+                var script:= ResourceLoader.load(script_path, "", ResourceLoader.CACHE_MODE_REUSE)
+                _plugin.get_editor_interface().get_file_system_dock().navigate_to_path(script_path)
+                _plugin.get_editor_interface().select_file(script_path)
+                _plugin.get_editor_interface().edit_script(script, line_number, 0)
+                _plugin.get_editor_interface().set_main_screen_editor("Script")
+
 # Here, we receive plan from orchestrator. Plan contains test case that are to be run,
 # and each test case contains methods that will be run too.
 # All are pending !
@@ -240,7 +266,6 @@ func _handle_testsuite_plan(plan:STHTestsuitePlanReady) -> void:
         tc_item.set_text(0, test_case.test_case_name)
         tc_item.set_tooltip_text(0, test_case.test_case_path)
         var tc_metadata:TestCaseMetadata = TestCaseMetadata.new()
-        tc_metadata.test_case_name = test_case.test_case_name
         tc_metadata.test_case_path = test_case.test_case_path
         tc_item.set_meta(ITEM_METADATA_NAME, tc_metadata)
         _indexed_tree_items[test_case.test_case_path] = tc_item
@@ -250,7 +275,6 @@ func _handle_testsuite_plan(plan:STHTestsuitePlanReady) -> void:
             tm_item.set_text(0, test_method.test_method_name)
             tm_item.set_tooltip_text(0, test_method.test_method_name)
             var m_metadata:TestCaseMethodMetadata = TestCaseMethodMetadata.new()
-            m_metadata.test_case_name = test_case.test_case_name
             m_metadata.test_case_path = test_case.test_case_path
             m_metadata.test_case_method_name = test_method.test_method_name
             m_metadata.test_case_method_line_number = test_method.test_method_line_number
@@ -299,6 +323,10 @@ func _handle_test_case_method_report(report:STHTestCaseMethodReport) -> void:
                 var assert_item:TreeItem = _tree.create_item(method_item)
                 assert_item.set_text(0, assert_report.description)
                 assert_item.set_tooltip_text(0, assert_report.description)
+                var metadata:TestCaseMethodAssertionMetadata = TestCaseMethodAssertionMetadata.new()
+                metadata.test_case_path = report.test_case_path
+                metadata.test_case_method_assertion_line_number = assert_report.line_number
+                assert_item.set_meta(ITEM_METADATA_NAME, metadata)
                 if assert_report.is_success:
                     assert_item.set_icon(0, IconRegistry.ICON_TEST_SUCCESS)
                 else:
@@ -346,9 +374,12 @@ func _can_collaspe_item(item:TreeItem) -> bool:
     if is_instance_valid(selected_item):
         var test_case_item:TreeItem
         if not item.has_meta(ITEM_METADATA_NAME):
-            # Assertion, two step up
-            test_case_item = item.get_parent().get_parent()
+            # Whattttt
+            push_error("Item should have metadata")
         else:
+            if item.get_meta(ITEM_METADATA_NAME) is STHTestCaseAssertionReport:
+                # Assertion, two step up
+                test_case_item = item.get_parent().get_parent()
             if item.get_meta(ITEM_METADATA_NAME) is TestCaseMethodMetadata:
                 # Method, one step up
                 test_case_item = item.get_parent()
@@ -367,14 +398,17 @@ func _can_collaspe_item(item:TreeItem) -> bool:
 # -------------
 
 class TestCaseMetadata extends RefCounted:
-    var test_case_name:String
     var test_case_path:String
     var test_case_result:int
 
 class TestCaseMethodMetadata extends RefCounted:
-    var test_case_name:String
     var test_case_path:String
     var test_case_method_name:String
     var test_case_method_line_number:int
     var test_case_method_result:int
     var test_case_method_logs:PackedStringArray
+
+class TestCaseMethodAssertionMetadata extends RefCounted:
+    var test_case_path:String
+    var test_case_method_assertion_line_number:int
+

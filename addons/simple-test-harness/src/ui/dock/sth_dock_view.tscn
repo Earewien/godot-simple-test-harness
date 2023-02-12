@@ -133,5 +133,6 @@ scroll_smooth = true
 [connection signal="pressed" from="ScrollContainer/VBoxContainer/ButtonBar/RunFailedButton" to="." method="_on_run_failed_button_pressed"]
 [connection signal="pressed" from="ScrollContainer/VBoxContainer/ButtonBar/ExpandButton" to="." method="_on_expand_button_pressed"]
 [connection signal="pressed" from="ScrollContainer/VBoxContainer/ButtonBar/CollapseButton" to="." method="_on_collapse_button_pressed"]
+[connection signal="item_activated" from="ScrollContainer/VBoxContainer/SplitContainer/ReportTree" to="." method="_on_report_tree_item_activated"]
 [connection signal="item_selected" from="ScrollContainer/VBoxContainer/SplitContainer/ReportTree" to="." method="_on_report_tree_item_selected"]
 [connection signal="nothing_selected" from="ScrollContainer/VBoxContainer/SplitContainer/ReportTree" to="." method="_on_report_tree_nothing_selected"]
