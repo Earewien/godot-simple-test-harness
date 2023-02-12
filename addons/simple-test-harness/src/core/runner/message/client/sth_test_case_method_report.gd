@@ -27,6 +27,7 @@ var execution_time_ms:int
 var result:int
 var result_description:String
 var assertion_reports:Array[STHTestCaseAssertionReport] = []
+var logs:PackedStringArray = []
 
 #------------------------------------------
 # Variables privées
@@ -51,6 +52,7 @@ static func deserialize(data:Dictionary) -> STHTestCaseMethodReport:
     report.result_description = data["result_description"]
     for sar in data["assertion_reports"]:
         report.assertion_reports.append(STHTestCaseAssertionReport.deserialize(sar))
+    report.logs = data["logs"]
     return report
 
 func serialize() -> Dictionary:
@@ -62,7 +64,8 @@ func serialize() -> Dictionary:
         "execution_time_ms" : execution_time_ms,
         "result" : result,
         "result_description" : result_description,
-        "assertion_reports" : assertion_reports.map(func(ar):return ar.serialize())
+        "assertion_reports" : assertion_reports.map(func(ar):return ar.serialize()),
+        "logs" : logs
     }
 
 func get_type() -> String:

@@ -120,9 +120,13 @@ func _execute_method(test_case_plan:STHTestCasePlan, test_script_instance:TestCa
         var test_case_method_stop_time_ms:int = Time.get_ticks_msec()
         method_report.execution_time_ms = test_case_method_stop_time_ms - test_case_method_start_time_ms
 
+        # SET LOGS
+        var test_logs:PackedStringArray = godot_log_handler.get_log_content()
+        method_report.logs = test_logs
+
         # ANALYZE SCRIPT ERRORS
         var log_analyzer:GogotErrorLogAnalyzer = GogotErrorLogAnalyzer.new()
-        var error_descriptor:GodotErrorLogDescriptor = log_analyzer.analyze(godot_log_handler.get_log_content())
+        var error_descriptor:GodotErrorLogDescriptor = log_analyzer.analyze(test_logs)
 
         # Keep assertion reports
         for ar in assertion_reporter.assertion_reports:

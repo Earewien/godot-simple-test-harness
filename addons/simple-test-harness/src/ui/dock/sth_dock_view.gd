@@ -27,6 +27,7 @@ var _plugin:SimpleTestHarnessPlugin
 @onready var _clear_button:TextureButton = %ClearButton
 @onready var _run_all_button:TextureButton = %RunAllButton
 @onready var _run_failed_button:TextureButton = %RunFailedButton
+@onready var _logs_text_edit:TextEdit = %LogsTextEdit
 
 var _tab_container:TabContainer
 
@@ -54,6 +55,9 @@ func _ready() -> void:
     # Init button states
     _run_all_button.disabled = true
     _run_failed_button.disabled = true
+
+    # Init logs state
+    _logs_text_edit.visible = false
 
 func _notification(what: int) -> void:
     if  what == NOTIFICATION_PREDELETE:
@@ -131,6 +135,22 @@ func _on_collapse_button_pressed() -> void:
         for child in _tree.get_root().get_children():
             child.set_collapsed_recursive(true)
 
+func _on_report_tree_nothing_selected() -> void:
+    _logs_text_edit.visible = false
+
+func _on_report_tree_item_selected() -> void:
+    var selected_item:TreeItem = _tree.get_selected()
+    if selected_item.has_meta(ITEM_METADATA_NAME):
+        var meta = selected_item.get_meta(ITEM_METADATA_NAME)
+        if meta is TestCaseMethodMetadata:
+            _logs_text_edit.visible = true
+            _logs_text_edit.text = ""
+            for line in meta.test_case_method_logs:
+                _logs_text_edit.text += line + "\n"
+            _logs_text_edit.text = _logs_text_edit.text.strip_edges()
+        else:
+            _logs_text_edit.visible = false
+
 # -------------
 # Orchestrator
 # -------------
@@ -173,6 +193,9 @@ func _clear_report() -> void:
     # No items, no run !
     _run_all_button.disabled = true
     _run_failed_button.disabled = true
+
+    # And no logs
+    _logs_text_edit.visible = false
 
 func _on_orchestrator_idle() -> void:
     _clear_button.disabled = false
@@ -256,6 +279,7 @@ func _handle_test_case_method_report(report:STHTestCaseMethodReport) -> void:
         method_item.set_text_alignment(1, HORIZONTAL_ALIGNMENT_RIGHT)
         method_item.set_suffix(1, "ms")
         method_item.get_meta(ITEM_METADATA_NAME).test_case_method_result = report.result
+        method_item.get_meta(ITEM_METADATA_NAME).test_case_method_logs = report.logs
 
         if report.is_successful():
             method_item.set_icon(0, IconRegistry.ICON_TEST_SUCCESS)
@@ -320,3 +344,4 @@ class TestCaseMethodMetadata extends RefCounted:
     var test_case_method_name:String
     var test_case_method_line_number:int
     var test_case_method_result:int
+    var test_case_method_logs:PackedStringArray
