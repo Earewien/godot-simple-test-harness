@@ -44,21 +44,6 @@ func _ready() -> void:
     _tcp_client.on_disconnection.connect(_on_sth_tcp_client_disconnected)
     _tcp_client.start()
 
-func _process(delta: float) -> void:
-    match _state:
-         TestSuiteState.WAITING_SERVER_CONNECTION:
-            pass
-         TestSuiteState.WAITING_COMMAND:
-            pass
-         TestSuiteState.RUNNING_TESTS:
-            pass
-         TestSuiteState.STOPPED_BY_USER:
-            pass
-         TestSuiteState.ERROR_SERVER_DISCONNECTED:
-            pass
-         TestSuiteState.DONE:
-            pass
-
 #------------------------------------------
 # Fonctions publiques
 #------------------------------------------
