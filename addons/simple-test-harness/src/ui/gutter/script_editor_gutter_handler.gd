@@ -95,7 +95,8 @@ func _on_editor_script_changed(script:Script) -> void:
         else:
             var script_editor:ScriptEditorBase = _plugin.get_editor_interface().get_script_editor().get_current_editor()
             var editor_gutter_clicked_callable:Callable = _on_gutter_clicked.bind(script)
-            script_editor.get_base_editor().gutter_clicked.connect(editor_gutter_clicked_callable)
+            if not script_editor.get_base_editor().gutter_clicked.is_connected(_on_gutter_clicked):
+                script_editor.get_base_editor().gutter_clicked.connect(editor_gutter_clicked_callable)
 
             var sth_gutter_id:int = _get_script_editor_sth_gutter_id(script_editor)
             _cached_script_editors[script.resource_path] = {
