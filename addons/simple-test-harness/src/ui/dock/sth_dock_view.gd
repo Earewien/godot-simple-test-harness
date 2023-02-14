@@ -191,7 +191,6 @@ func _clear_report() -> void:
     for item_key in _indexed_tree_items.keys():
         var item = _indexed_tree_items[item_key]
         if is_instance_valid(item):
-            print(item)
             item.free()
     _indexed_tree_items.clear()
 

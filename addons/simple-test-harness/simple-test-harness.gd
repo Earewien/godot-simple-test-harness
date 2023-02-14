@@ -59,11 +59,11 @@ func execute_test_case_method(script_path:String, method_name:String, debug_mode
     _orchestrator.run_test_test_case_method(script_path, method_name)
     _launch_test_runner(debug_mode)
 
-func _launch_test_runner(degub_mode:bool) -> void:
+func _launch_test_runner(debug_mode:bool) -> void:
     # In debug mode, directly play a scene, since we can benefit from godot debugger (breakpoints and all)
     # Without debug, we use the headless runner
     # TODO in debug mode : add a debugger plugin, to inspect breaks ; if its breaksq on an error, test is a failure
-    if degub_mode:
+    if debug_mode:
         get_editor_interface().play_custom_scene("res://addons/simple-test-harness/src/core/runner/test_suite_runner.tscn")
     else:
         if is_instance_valid(_headless_runner):

@@ -18,7 +18,6 @@ extends Node
 #------------------------------------------
 
 var _reporter:AssertionReporter
-var _scene_tree:SceneTree
 
 #------------------------------------------
 # Fonctions Godot redéfinies
