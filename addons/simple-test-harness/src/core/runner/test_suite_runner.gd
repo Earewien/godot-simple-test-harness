@@ -127,6 +127,7 @@ func _execute_execution_plan(execution_plan:STHExecutionPlan) -> void:
             runner.call_deferred("execute", test_case)
             await runner.completed
             remove_child(runner)
+            runner.queue_free()
             await Engine.get_main_loop().process_frame
         else:
             if _state == TestSuiteState.STOPPED_BY_USER:

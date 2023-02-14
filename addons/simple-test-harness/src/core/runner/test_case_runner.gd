@@ -56,7 +56,7 @@ func execute(test_case_plan:STHTestCasePlan) -> void:
     else:
         # On doit pouvoir instantier le script ici ...
         # Le script étend TestCase, donc on a des méthodes connues !
-        var tested_script:GDScript = ResourceLoader.load(test_case_plan.test_case_path)
+        var tested_script:GDScript = ResourceLoader.load(test_case_plan.test_case_path, "", ResourceLoader.CACHE_MODE_REUSE)
 
         # BEFORE ALL
         tested_script.beforeAll()
@@ -65,6 +65,7 @@ func execute(test_case_plan:STHTestCasePlan) -> void:
             var tested_script_instance:TestCase = tested_script.new()
             call_deferred("_execute_method", test_case_plan, tested_script_instance, test_method)
             await method_completed
+            tested_script_instance.free()
 
         # AFTER ALL
         tested_script.afterAll()
@@ -96,6 +97,9 @@ func _execute_method(test_case_plan:STHTestCasePlan, test_script_instance:TestCa
         method_report.execution_time_ms = 0
         method_report.result = STHTestCaseMethodReport.TEST_CASE_METHOD_RESULT_SKIPPED
         method_report.result_description = "Parametrized test not yet supported"
+
+        # Free instance, we wont use it !
+        test_script_instance.call_deferred("free")
     else:
         var test_case_method_start_time_ms:int = Time.get_ticks_msec()
 
@@ -109,11 +113,15 @@ func _execute_method(test_case_plan:STHTestCasePlan, test_script_instance:TestCa
 
         # TEST
         await test_script_instance.call(test_method.test_method_name)
+        # Give some time to Godot to do defered calls
+        await get_tree().process_frame
 
         # AFTER
         test_script_instance.afterEach()
 
         # FINALIZE
+         # Give some time to Godot to do defered calls
+        await get_tree().process_frame
         remove_child(test_script_instance)
 
         # TIME REPORT

@@ -1,5 +1,5 @@
 class_name ParsedGDScript
-extends Node
+extends RefCounted
 
 #------------------------------------------
 # Signaux

@@ -72,7 +72,7 @@ func run_test_test_case_method(test_case_path:String, test_case_method_name:Stri
 
     _change_state(ORCHESTRATOR_STATE_PREPARING_TESTSUITE)
 
-func finilize() -> void:
+func finalize() -> void:
     if is_instance_valid(_tcp_server):
         _tcp_server.on_client_connected.disconnect(_on_tcp_server_client_connected)
         _tcp_server.on_client_message_received.disconnect(_on_tcp_server_client_message_received)
