@@ -4,7 +4,8 @@ extends RefCounted
 enum {
     TEST_CASE_METHOD_RESULT_SUCCESS,
     TEST_CASE_METHOD_RESULT_FAILURE,
-    TEST_CASE_METHOD_RESULT_SKIPPED
+    TEST_CASE_METHOD_RESULT_SKIPPED,
+    TEST_CASE_METHOD_RESULT_ABORTED
 }
 
 #------------------------------------------
@@ -79,6 +80,9 @@ func is_skipped() -> bool:
 
 func is_failed() -> bool:
     return result == TEST_CASE_METHOD_RESULT_FAILURE
+
+func is_aborted() -> bool:
+    return result == TEST_CASE_METHOD_RESULT_ABORTED
 
 #------------------------------------------
 # Fonctions privées

@@ -9,6 +9,8 @@ const ICON_TEST_IN_PROGRESS:Texture2D = preload("res://addons/simple-test-harnes
 const ICON_TEST_SUCCESS:Texture2D = preload("res://addons/simple-test-harness/assets/icon_test_success.png")
 const ICON_TEST_SKIPPED:Texture2D = preload("res://addons/simple-test-harness/assets/icon_test_skip.png")
 const ICON_TEST_FAILED:Texture2D = preload("res://addons/simple-test-harness/assets/icon_test_fail.png")
+const ICON_TEST_ABORTED:Texture2D = preload("res://addons/simple-test-harness/assets/icon_test_aborted.png")
+
 #------------------------------------------
 # Signaux
 #------------------------------------------

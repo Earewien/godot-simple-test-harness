@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://83qxwjeocldf"]
+[gd_scene load_steps=20 format=3 uid="uid://83qxwjeocldf"]
 
 [ext_resource type="Script" path="res://addons/simple-test-harness/src/ui/dock/sth_dock_view.gd" id="1_x536d"]
 [ext_resource type="Texture2D" uid="uid://du7rwah88se3e" path="res://addons/simple-test-harness/assets/icon_dock_trash.png" id="2_rl8nc"]
@@ -14,6 +14,9 @@
 [ext_resource type="Texture2D" uid="uid://dbun4lfs73qhr" path="res://addons/simple-test-harness/assets/icon_dock_expand_hover.png" id="9_mqepb"]
 [ext_resource type="Texture2D" uid="uid://fjke6abyrhip" path="res://addons/simple-test-harness/assets/icon_dock_run_failed_disabled.png" id="10_nw7n5"]
 [ext_resource type="Texture2D" uid="uid://hgbwu048ylpr" path="res://addons/simple-test-harness/assets/icon_dock_collaspe_hover.png" id="11_mde5l"]
+[ext_resource type="Texture2D" uid="uid://b67sf87vue8q1" path="res://addons/simple-test-harness/assets/icons_dock_stop.png" id="11_x4vnh"]
+[ext_resource type="Texture2D" uid="uid://cd3mnpwbsighd" path="res://addons/simple-test-harness/assets/icons_dock_stop_hover.png" id="12_57a6u"]
+[ext_resource type="Texture2D" uid="uid://7m1nym8abp8h" path="res://addons/simple-test-harness/assets/icons_dock_stop_disabled.png" id="13_rcdvp"]
 [ext_resource type="Texture2D" uid="uid://bt1xvfmw2l78p" path="res://addons/simple-test-harness/assets/icon_dock_expand_disabled.png" id="13_yrobo"]
 [ext_resource type="Texture2D" uid="uid://sfth54u3e8kb" path="res://addons/simple-test-harness/assets/icon_dock_collaspe_disabled.png" id="16_ku2t8"]
 
@@ -77,6 +80,18 @@ texture_disabled = ExtResource("10_nw7n5")
 ignore_texture_size = true
 stretch_mode = 5
 
+[node name="StopButton" type="TextureButton" parent="ScrollContainer/VBoxContainer/ButtonBar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(28, 0)
+layout_mode = 2
+tooltip_text = "Stop tests"
+disabled = true
+texture_normal = ExtResource("11_x4vnh")
+texture_hover = ExtResource("12_57a6u")
+texture_disabled = ExtResource("13_rcdvp")
+ignore_texture_size = true
+stretch_mode = 5
+
 [node name="Spacer" type="Control" parent="ScrollContainer/VBoxContainer/ButtonBar"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -131,6 +146,7 @@ scroll_smooth = true
 [connection signal="pressed" from="ScrollContainer/VBoxContainer/ButtonBar/ClearButton" to="." method="_on_clear_button_pressed"]
 [connection signal="pressed" from="ScrollContainer/VBoxContainer/ButtonBar/RunAllButton" to="." method="_on_run_all_button_pressed"]
 [connection signal="pressed" from="ScrollContainer/VBoxContainer/ButtonBar/RunFailedButton" to="." method="_on_run_failed_button_pressed"]
+[connection signal="pressed" from="ScrollContainer/VBoxContainer/ButtonBar/StopButton" to="." method="_on_stop_button_pressed"]
 [connection signal="pressed" from="ScrollContainer/VBoxContainer/ButtonBar/ExpandButton" to="." method="_on_expand_button_pressed"]
 [connection signal="pressed" from="ScrollContainer/VBoxContainer/ButtonBar/CollapseButton" to="." method="_on_collapse_button_pressed"]
 [connection signal="item_activated" from="ScrollContainer/VBoxContainer/SplitContainer/ReportTree" to="." method="_on_report_tree_item_activated"]

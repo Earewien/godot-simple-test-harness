@@ -72,6 +72,12 @@ func run_test_test_case_method(test_case_path:String, test_case_method_name:Stri
 
     _change_state(ORCHESTRATOR_STATE_PREPARING_TESTSUITE)
 
+func stop_testsuite() -> void:
+    if _state == ORCHESTRATOR_STATE_IDLE:
+        push_error("Orchestrator can not stop testsuite : idle")
+        return
+    _tcp_server.send_data(STHRunnerMessageHandler.create_message(STHStopTestsuite.new()))
+
 func finalize() -> void:
     if is_instance_valid(_tcp_server):
         _tcp_server.on_client_connected.disconnect(_on_tcp_server_client_connected)

@@ -17,6 +17,7 @@ signal method_completed
 #------------------------------------------
 
 var tcp_client:STHTCPClient
+var aborted:bool = false
 
 #------------------------------------------
 # Variables privées
@@ -25,6 +26,7 @@ var tcp_client:STHTCPClient
 var _number_of_successful_method:int = 0
 var _number_of_skipped_method:int = 0
 var _number_of_failed_method:int = 0
+var _number_of_aborted_method:int = 0
 
 #------------------------------------------
 # Fonctions Godot redéfinies
@@ -84,23 +86,24 @@ func execute(test_case_plan:STHTestCasePlan) -> void:
 func _execute_method(test_case_plan:STHTestCasePlan, test_script_instance:TestCase, test_method:STHTestCaseMethodPlan) -> void:
     _notify_test_case_method_started(test_case_plan, test_method)
 
-    var godot_log_handler:GodotLogHandler = GodotLogHandler.new()
-
     var method_report:STHTestCaseMethodReport = STHTestCaseMethodReport.new()
     method_report.test_case_name = test_case_plan.test_case_name
     method_report.test_case_path = test_case_plan.test_case_path
     method_report.method_name = test_method.test_method_name
     method_report.line_number = test_method.test_method_line_number
 
+    if aborted:
+        # Report aborted test
+        method_report.execution_time_ms = 0
+        method_report.result = STHTestCaseMethodReport.TEST_CASE_METHOD_RESULT_ABORTED
     # TODO parametrized method not yet supported
-    if test_method.test_method_arguments_count > 0:
+    elif test_method.test_method_arguments_count > 0:
         method_report.execution_time_ms = 0
         method_report.result = STHTestCaseMethodReport.TEST_CASE_METHOD_RESULT_SKIPPED
         method_report.result_description = "Parametrized test not yet supported"
-
-        # Free instance, we wont use it !
-        test_script_instance.call_deferred("free")
     else:
+        var godot_log_handler:GodotLogHandler = GodotLogHandler.new()
+
         var test_case_method_start_time_ms:int = Time.get_ticks_msec()
 
         # INIT
@@ -155,16 +158,18 @@ func _execute_method(test_case_plan:STHTestCasePlan, test_script_instance:TestCa
         else:
             method_report.result = STHTestCaseMethodReport.TEST_CASE_METHOD_RESULT_FAILURE if assertion_reporter.has_failures() else STHTestCaseMethodReport.TEST_CASE_METHOD_RESULT_SUCCESS
 
-        if method_report.result == STHTestCaseMethodReport.TEST_CASE_METHOD_RESULT_SUCCESS:
-            _number_of_successful_method += 1
-        elif method_report.result == STHTestCaseMethodReport.TEST_CASE_METHOD_RESULT_SKIPPED:
-            _number_of_skipped_method += 1
-        elif method_report.result == STHTestCaseMethodReport.TEST_CASE_METHOD_RESULT_FAILURE:
-            _number_of_failed_method += 1
+        godot_log_handler.close()
+
+    if method_report.result == STHTestCaseMethodReport.TEST_CASE_METHOD_RESULT_SUCCESS:
+        _number_of_successful_method += 1
+    elif method_report.result == STHTestCaseMethodReport.TEST_CASE_METHOD_RESULT_SKIPPED:
+        _number_of_skipped_method += 1
+    elif method_report.result == STHTestCaseMethodReport.TEST_CASE_METHOD_RESULT_FAILURE:
+        _number_of_failed_method += 1
+    elif method_report.result == STHTestCaseMethodReport.TEST_CASE_METHOD_RESULT_ABORTED:
+        _number_of_aborted_method += 1
 
     _notify_test_case_method_report(method_report)
-
-    godot_log_handler.close()
 
     method_completed.emit()
 
@@ -200,6 +205,8 @@ func _notify_test_case_finished(test_case_plan:STHTestCasePlan, execution_time_m
             tc_finished_message.test_case_status = STHTestCaseFinished.TEST_CASE_STATUS_UNSTABLE
         else:
             tc_finished_message.test_case_status = STHTestCaseFinished.TEST_CASE_STATUS_FAILED
+    elif _number_of_aborted_method > 0:
+        tc_finished_message.test_case_status = STHTestCaseFinished.TEST_CASE_STATUS_ABORTED
     else:
         tc_finished_message.test_case_status = STHTestCaseFinished.TEST_CASE_STATUS_SUCCESSFUL
 

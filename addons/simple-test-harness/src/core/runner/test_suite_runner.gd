@@ -6,7 +6,7 @@ enum TestSuiteState {
     WAITING_COMMAND,
     RUNNING_TESTS,
     ERROR_SERVER_DISCONNECTED,
-    STOPPED_BY_USER,
+    ABORTED,
     DONE,
 }
 
@@ -29,6 +29,7 @@ enum TestSuiteState {
 @onready var _tcp_client:STHTCPClient = $sth_tcp_client
 
 var _state:TestSuiteState
+var _current_runner:TestCaseRunner
 
 #------------------------------------------
 # Fonctions Godot redéfinies
@@ -118,22 +119,18 @@ func _execute_execution_plan(execution_plan:STHExecutionPlan) -> void:
     var plan_start_time_ms:int = Time.get_ticks_msec()
 
     for test_case in execution_plan.test_case_plans:
-        # Recheck if testsuite must continue or not
-        if _state == TestSuiteState.RUNNING_TESTS:
-            var runner:TestCaseRunner = preload("res://addons/simple-test-harness/src/core/runner/test_case_runner.tscn").instantiate()
-            add_child(runner)
-            await Engine.get_main_loop().process_frame
-            runner.tcp_client = _tcp_client
-            runner.call_deferred("execute", test_case)
-            await runner.completed
-            remove_child(runner)
-            runner.queue_free()
-            await Engine.get_main_loop().process_frame
-        else:
-            if _state == TestSuiteState.STOPPED_BY_USER:
-                print("TestSuite aborted by user")
-            else:
-                push_error("Testsuite stopped for unknown reason, state is %s" % TestSuiteState.keys()[_state])
+        _current_runner = preload("res://addons/simple-test-harness/src/core/runner/test_case_runner.tscn").instantiate()
+        add_child(_current_runner)
+        await Engine.get_main_loop().process_frame
+        _current_runner.tcp_client = _tcp_client
+        # Propagate aborted state to runner ; it will create reports for that
+        _current_runner.aborted = _state == TestSuiteState.ABORTED
+        _current_runner.call_deferred("execute", test_case)
+        await _current_runner.completed
+        remove_child(_current_runner)
+        _current_runner.queue_free()
+        _current_runner = null
+        await Engine.get_main_loop().process_frame
 
     var plan_stop_time_ms:int = Time.get_ticks_msec()
     var execution_time_ms:int = plan_stop_time_ms - plan_start_time_ms
@@ -144,7 +141,10 @@ func _execute_execution_plan(execution_plan:STHExecutionPlan) -> void:
     get_tree().quit()
 
 func _stop_testsuite(_object:STHStopTestsuite) -> void:
-    _state = TestSuiteState.STOPPED_BY_USER
+    _state = TestSuiteState.ABORTED
+    # Notify runner too, it has to stop running methods
+    if is_instance_valid(_current_runner):
+        _current_runner.aborted = true
 
 func _notify_test_suite_plan_ready(plan:STHTestsuitePlanReady) -> void:
     _tcp_client.send_data(STHRunnerMessageHandler.create_message(plan))

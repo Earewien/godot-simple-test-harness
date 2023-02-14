@@ -59,6 +59,9 @@ func execute_test_case_method(script_path:String, method_name:String, debug_mode
     _orchestrator.run_test_test_case_method(script_path, method_name)
     _launch_test_runner(debug_mode)
 
+func stop_testsuite() -> void:
+    _orchestrator.stop_testsuite()
+
 func _launch_test_runner(debug_mode:bool) -> void:
     # In debug mode, directly play a scene, since we can benefit from godot debugger (breakpoints and all)
     # Without debug, we use the headless runner

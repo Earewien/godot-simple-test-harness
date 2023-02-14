@@ -27,6 +27,7 @@ var _plugin:SimpleTestHarnessPlugin
 @onready var _clear_button:TextureButton = %ClearButton
 @onready var _run_all_button:TextureButton = %RunAllButton
 @onready var _run_failed_button:TextureButton = %RunFailedButton
+@onready var _stop_tests_button:TextureButton = %StopButton
 @onready var _logs_text_edit:TextEdit = %LogsTextEdit
 
 var _tab_container:TabContainer
@@ -55,6 +56,7 @@ func _ready() -> void:
     # Init button states
     _run_all_button.disabled = true
     _run_failed_button.disabled = true
+    _stop_tests_button.disabled = true
 
     # Init logs state
     _logs_text_edit.visible = false
@@ -124,6 +126,11 @@ func _on_run_all_button_pressed() -> void:
 
 func _on_run_failed_button_pressed() -> void:
      _run_failed_test_cases()
+
+func _on_stop_button_pressed() -> void:
+    _stop_testsuite()
+    # Testsuite can take time to stop. Do not allow to send multiple demands
+    _stop_tests_button.disabled = true
 
 func _on_expand_button_pressed() -> void:
     if is_instance_valid(_tree.get_root()):
@@ -197,6 +204,7 @@ func _clear_report() -> void:
     # No items, no run !
     _run_all_button.disabled = true
     _run_failed_button.disabled = true
+    _stop_tests_button.disabled = true
 
     # And no logs
     _logs_text_edit.visible = false
@@ -205,10 +213,12 @@ func _on_orchestrator_idle() -> void:
     _clear_button.disabled = false
     _run_all_button.disabled = _indexed_tree_items.is_empty()
     _run_failed_button.disabled = _indexed_tree_items.is_empty()
+    _stop_tests_button.disabled = true
 
 func _on_orchestrator_preparing_testsuite() -> void:
     _clear_report()
     _show_tab()
+    _stop_tests_button.disabled = false
     _clear_button.disabled = true
     _run_all_button.disabled = true
     _run_failed_button.disabled = true
@@ -230,6 +240,9 @@ func _run_failed_test_cases() -> void:
             if meta.test_case_result != STHTestCaseFinished.TEST_CASE_STATUS_SUCCESSFUL:
                 paths.append(meta.test_case_path)
     _plugin.execute_test_cases_from_path(paths, false)
+
+func _stop_testsuite() -> void:
+    _plugin.stop_testsuite()
 
 func _open_selected_item_related_script() -> void:
     var selected_item:TreeItem = _tree.get_selected()
@@ -312,6 +325,8 @@ func _handle_test_case_method_report(report:STHTestCaseMethodReport) -> void:
             method_item.set_icon(0, IconRegistry.ICON_TEST_SKIPPED)
         elif report.is_failed():
             method_item.set_icon(0, IconRegistry.ICON_TEST_FAILED)
+        elif report.is_aborted():
+            method_item.set_icon(0, IconRegistry.ICON_TEST_ABORTED)
 
         if report.is_skipped():
             var desc_item:TreeItem = _tree.create_item(method_item)
@@ -361,6 +376,8 @@ func _handle_test_case_finished(message:STHTestCaseFinished) -> void:
                 test_case_item.set_icon(0, IconRegistry.ICON_TEST_FAILED)
             STHTestCaseFinished.TEST_CASE_STATUS_FAILED:
                 test_case_item.set_icon(0, IconRegistry.ICON_TEST_FAILED)
+            STHTestCaseFinished.TEST_CASE_STATUS_ABORTED:
+                test_case_item.set_icon(0, IconRegistry.ICON_TEST_ABORTED)
 
         if message.test_case_status == STHTestCaseFinished.TEST_CASE_STATUS_SUCCESSFUL:
             if _can_collaspe_item(test_case_item):
@@ -410,4 +427,3 @@ class TestCaseMethodMetadata extends RefCounted:
 class TestCaseMethodAssertionMetadata extends RefCounted:
     var test_case_path:String
     var test_case_method_assertion_line_number:int
-
