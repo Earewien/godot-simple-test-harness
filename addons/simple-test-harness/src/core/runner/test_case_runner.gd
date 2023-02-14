@@ -39,7 +39,7 @@ var _number_of_aborted_method:int = 0
 func execute(test_case_plan:STHTestCasePlan) -> void:
     _notify_test_case_started(test_case_plan)
 
-    var test_case_start_time_ms:int = Time.get_ticks_msec()
+
 
     # Pas de constructeur, on passe !
     if not test_case_plan.has_default_constructor:
@@ -55,27 +55,32 @@ func execute(test_case_plan:STHTestCasePlan) -> void:
             method_report.result_description = "No _init function with 0 argument. Cannot instantiate script."
             _number_of_skipped_method += 1
             _notify_test_case_method_report(method_report)
+        _notify_test_case_skipped(test_case_plan)
     else:
         # On doit pouvoir instantier le script ici ...
         # Le script étend TestCase, donc on a des méthodes connues !
-        var tested_script:GDScript = ResourceLoader.load(test_case_plan.test_case_path, "", ResourceLoader.CACHE_MODE_REUSE)
+        var tested_script:GDScript = GDScriptFactory.get_gdscript(test_case_plan.test_case_path)
+        if tested_script.get_meta(GDScriptFactory.META_LOAD_ERROR) != OK:
+            # Something went wrong while loading script, report it and pass
+            _notify_test_case_failed(test_case_plan, tested_script.get_meta(GDScriptFactory.META_LOAD_ERROR))
+        else:
+            var test_case_start_time_ms:int = Time.get_ticks_msec()
+            # BEFORE ALL
+            tested_script.beforeAll()
 
-        # BEFORE ALL
-        tested_script.beforeAll()
+            for test_method in test_case_plan.test_case_methods:
+                var tested_script_instance:TestCase = tested_script.new()
+                call_deferred("_execute_method", test_case_plan, tested_script_instance, test_method)
+                await method_completed
+                tested_script_instance.free()
 
-        for test_method in test_case_plan.test_case_methods:
-            var tested_script_instance:TestCase = tested_script.new()
-            call_deferred("_execute_method", test_case_plan, tested_script_instance, test_method)
-            await method_completed
-            tested_script_instance.free()
+            # AFTER ALL
+            tested_script.afterAll()
 
-        # AFTER ALL
-        tested_script.afterAll()
+            var test_case_stop_time_ms:int = Time.get_ticks_msec()
+            var execution_time_ms:int = test_case_stop_time_ms - test_case_start_time_ms
 
-    var test_case_stop_time_ms:int = Time.get_ticks_msec()
-    var execution_time_ms:int = test_case_stop_time_ms - test_case_start_time_ms
-
-    _notify_test_case_finished(test_case_plan, execution_time_ms)
+            _notify_test_case_finished(test_case_plan, execution_time_ms)
 
     completed.emit()
 
@@ -189,6 +194,23 @@ func _notify_test_case_method_started(test_case_plan:STHTestCasePlan, test_metho
 
 func _notify_test_case_method_report(report:STHTestCaseMethodReport) -> void:
     tcp_client.send_data(STHRunnerMessageHandler.create_message(report))
+
+func _notify_test_case_skipped(test_case_plan:STHTestCasePlan) -> void:
+    var tc_skipped_message:STHTestCaseFinished = STHTestCaseFinished.new()
+    tc_skipped_message.test_case_name = test_case_plan.test_case_name
+    tc_skipped_message.test_case_path = test_case_plan.test_case_path
+    tc_skipped_message.test_case_execution_time_ms = 0
+    tc_skipped_message.test_case_status = STHTestCaseFinished.TEST_CASE_STATUS_SKIPPED
+    tcp_client.send_data(STHRunnerMessageHandler.create_message(tc_skipped_message))
+
+func _notify_test_case_failed(test_case_plan:STHTestCasePlan, error:int) -> void:
+    var tc_failed_message:STHTestCaseFinished = STHTestCaseFinished.new()
+    tc_failed_message.test_case_name = test_case_plan.test_case_name
+    tc_failed_message.test_case_path = test_case_plan.test_case_path
+    tc_failed_message.test_case_execution_time_ms = 0
+    tc_failed_message.test_case_status = STHTestCaseFinished.TEST_CASE_STATUS_FAILED
+    tc_failed_message.test_case_result_description = "Unable to load script : %s" % error_string(error)
+    tcp_client.send_data(STHRunnerMessageHandler.create_message(tc_failed_message))
 
 func _notify_test_case_finished(test_case_plan:STHTestCasePlan, execution_time_ms:int) -> void:
     var tc_finished_message:STHTestCaseFinished = STHTestCaseFinished.new()

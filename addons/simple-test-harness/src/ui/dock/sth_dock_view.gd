@@ -330,8 +330,9 @@ func _handle_test_case_method_report(report:STHTestCaseMethodReport) -> void:
 
         if report.is_skipped():
             var desc_item:TreeItem = _tree.create_item(method_item)
-            desc_item.set_icon(0, IconRegistry.ICON_TEST_SKIPPED)
+            desc_item.set_icon(0, method_item.get_icon(0))
             desc_item.set_text(0, report.result_description)
+            _indexed_tree_items[report.test_case_path + report.method_name + "desc"] = desc_item
         else:
             for assert_report in report.assertion_reports:
                 var assert_item:TreeItem = _tree.create_item(method_item)
@@ -378,6 +379,12 @@ func _handle_test_case_finished(message:STHTestCaseFinished) -> void:
                 test_case_item.set_icon(0, IconRegistry.ICON_TEST_FAILED)
             STHTestCaseFinished.TEST_CASE_STATUS_ABORTED:
                 test_case_item.set_icon(0, IconRegistry.ICON_TEST_ABORTED)
+
+        if not message.test_case_result_description.is_empty():
+            var desc_item:TreeItem = _tree.create_item(test_case_item)
+            desc_item.set_icon(0, test_case_item.get_icon(0))
+            desc_item.set_text(0, message.test_case_result_description)
+            _indexed_tree_items[message.test_case_path + "desc"] = desc_item
 
         if message.test_case_status == STHTestCaseFinished.TEST_CASE_STATUS_SUCCESSFUL:
             if _can_collaspe_item(test_case_item):

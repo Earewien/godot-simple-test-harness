@@ -25,6 +25,7 @@ var test_case_name:String
 var test_case_path:String
 var test_case_execution_time_ms:int
 var test_case_status:int
+var test_case_result_description:String
 
 #------------------------------------------
 # Variables privées
@@ -40,6 +41,7 @@ static func deserialize(data:Dictionary) ->  STHTestCaseFinished:
     message.test_case_path = data["test_case_path"]
     message.test_case_execution_time_ms = data["test_case_execution_time_ms"]
     message.test_case_status = data["test_case_status"]
+    message.test_case_result_description = data["test_case_result_description"]
     return message
 
 func serialize() -> Dictionary:
@@ -47,7 +49,8 @@ func serialize() -> Dictionary:
         "test_case_name" : test_case_name,
         "test_case_path" : test_case_path,
         "test_case_execution_time_ms" : test_case_execution_time_ms,
-        "test_case_status" : test_case_status
+        "test_case_status" : test_case_status,
+        "test_case_result_description" : test_case_result_description
     }
 
 func get_type() -> String:

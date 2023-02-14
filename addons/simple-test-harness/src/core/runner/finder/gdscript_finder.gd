@@ -39,6 +39,8 @@ func execute() -> Array[GDScript]:
 #------------------------------------------
 
 func _recursive_find_gd_scripts(path:String) -> Array[GDScript]:
+    # Since resource path is a key to identify resource, make sur each path is canonical !
+    path = path.simplify_path()
     var scripts:Array[GDScript] = []
 
     # Recursive search in directory
@@ -47,14 +49,13 @@ func _recursive_find_gd_scripts(path:String) -> Array[GDScript]:
         res_dir.list_dir_begin()
         var file_name = res_dir.get_next()
         while file_name != "":
-            scripts.append_array(_recursive_find_gd_scripts("%s/%s" % [path, file_name]))
+            scripts.append_array(_recursive_find_gd_scripts(path.path_join(file_name)))
             file_name = res_dir.get_next()
     # Path represents a file !
     elif FileAccess.file_exists(path):
         # A file, maybe a GDScript ?
         if path.get_extension() == "gd":
-            var loaded_file = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_REUSE)
-            if loaded_file is GDScript:
-                scripts.append(loaded_file)
+            var loaded_file = GDScriptFactory.get_gdscript(path)
+            scripts.append(loaded_file)
 
     return scripts
