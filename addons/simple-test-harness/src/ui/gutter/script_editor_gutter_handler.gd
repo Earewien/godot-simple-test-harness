@@ -23,6 +23,8 @@ var _plugin:SimpleTestHarnessPlugin
 
 var _cached_script_editors:Dictionary = { }
 
+var _can_run_tests:bool = true
+
 #------------------------------------------
 # Fonctions Godot redéfinies
 #------------------------------------------
@@ -31,6 +33,11 @@ func initialize() -> void:
     if not Engine.has_meta(SimpleTestHarnessPlugin.PLUGIN_ENGINE_META):
         return
     _plugin = Engine.get_meta(SimpleTestHarnessPlugin.PLUGIN_ENGINE_META)
+
+    # To disable run actions when testsuite is already running
+    if Engine.has_meta(SimpleTestHarnessPlugin.PLUGIN_ORCHESTRATOR_META):
+        var orchestrator:STHOrchestrator = Engine.get_meta(SimpleTestHarnessPlugin.PLUGIN_ORCHESTRATOR_META)
+        orchestrator.on_state_changed.connect(_on_orchestrator_state_changed)
 
     # When a resource is saved, if its a GDScript currently in edition, gutter must be reload
     if not _plugin.resource_saved.is_connected(_on_resource_saved):
@@ -44,6 +51,11 @@ func initialize() -> void:
         script_editor.script_close.connect(_on_editor_script_closed)
 
 func finalize() -> void:
+    # To disable run actions when testsuite is already running
+    if Engine.has_meta(SimpleTestHarnessPlugin.PLUGIN_ORCHESTRATOR_META):
+        var orchestrator:STHOrchestrator = Engine.get_meta(SimpleTestHarnessPlugin.PLUGIN_ORCHESTRATOR_META)
+        orchestrator.on_state_changed.disconnect(_on_orchestrator_state_changed)
+
     var script_editor:ScriptEditor = _plugin.get_editor_interface().get_script_editor()
     if script_editor.editor_script_changed.is_connected(_on_editor_script_changed):
         script_editor.editor_script_changed.disconnect(_on_editor_script_changed)
@@ -66,6 +78,13 @@ func finalize() -> void:
 #------------------------------------------
 # Fonctions privées
 #------------------------------------------
+
+func _on_orchestrator_state_changed(state:int) -> void:
+    _can_run_tests = state == STHOrchestrator.ORCHESTRATOR_STATE_IDLE
+    # Reload gutters if necessary
+    var edited_script = _plugin.get_editor_interface().get_script_editor().get_current_script()
+    if edited_script:
+        _reload_gutter_for_script(edited_script)
 
 func _on_resource_saved(resource:Resource) -> void:
     if not resource is GDScript:
@@ -151,8 +170,12 @@ func _reload_gutter_for_script(script:GDScript) -> void:
     if parsed_script.script_parent_class_name == "TestCase":
         for function in parsed_script.script_functions:
             if _is_valid_test_function(function):
-                code_edit.set_line_gutter_icon(function.function_line_number, sth_gutter_id, preload("res://addons/simple-test-harness/assets/icon_run_test.png"))
-                code_edit.set_line_gutter_clickable(function.function_line_number, sth_gutter_id, true)
+                if _can_run_tests:
+                    code_edit.set_line_gutter_icon(function.function_line_number, sth_gutter_id, IconRegistry.ICON_RUN_TEST)
+                    code_edit.set_line_gutter_clickable(function.function_line_number, sth_gutter_id, true)
+                else:
+                    code_edit.set_line_gutter_icon(function.function_line_number, sth_gutter_id, IconRegistry.ICON_RUN_TEST_DISABLED)
+                    code_edit.set_line_gutter_clickable(function.function_line_number, sth_gutter_id, false)
                 _cached_script_editors[script.resource_path]["gutters"][function.function_line_number] = function.function_name
 
 func _on_gutter_clicked(line:int, gutter_id:int, script:GDScript) -> void:

@@ -28,6 +28,8 @@ var _fs_tree:Tree
 # Item list when splitted view is activated
 var _fs_item_list:ItemList
 
+var _can_run_tests:bool = true
+
 #------------------------------------------
 # Fonctions Godot redéfinies
 #------------------------------------------
@@ -56,6 +58,11 @@ func initialize() -> void:
         _initialize_popup_menu(_fs_tree_popup_menu, _fs_tree)
         _initialize_popup_menu(_fs_item_list_popup_menu, _fs_item_list)
 
+        # To disable run actions when testsuite is already running
+        if Engine.has_meta(SimpleTestHarnessPlugin.PLUGIN_ORCHESTRATOR_META):
+            var orchestrator:STHOrchestrator = Engine.get_meta(SimpleTestHarnessPlugin.PLUGIN_ORCHESTRATOR_META)
+            orchestrator.on_state_changed.connect(_on_orchestrator_state_changed)
+
 func finalize() -> void:
     if is_instance_valid(_fs_tree_popup_menu):
         if _fs_tree_popup_menu.about_to_popup.is_connected(_on_fs_menu_showing):
@@ -69,6 +76,10 @@ func finalize() -> void:
         if _fs_item_list_popup_menu.close_requested.is_connected(_on_fs_menu_closing):
             _fs_item_list_popup_menu.close_requested.disconnect(_on_fs_menu_closing)
 
+    if Engine.has_meta(SimpleTestHarnessPlugin.PLUGIN_ORCHESTRATOR_META):
+        var orchestrator:STHOrchestrator = Engine.get_meta(SimpleTestHarnessPlugin.PLUGIN_ORCHESTRATOR_META)
+        orchestrator.on_state_changed.disconnect(_on_orchestrator_state_changed)
+
     _fs_tree_popup_menu = null
     _fs_item_list_popup_menu = null
     _fs_tree = null
@@ -79,6 +90,11 @@ func finalize() -> void:
 #------------------------------------------
 # Fonctions privées
 #------------------------------------------
+
+func _on_orchestrator_state_changed(state:int) -> void:
+    _can_run_tests = state == STHOrchestrator.ORCHESTRATOR_STATE_IDLE
+    _update_menu_item_availability(_fs_tree_popup_menu)
+    _update_menu_item_availability(_fs_item_list_popup_menu)
 
 func _initialize_popup_menu(menu:PopupMenu, container) -> void:
     if not menu.about_to_popup.is_connected(_on_fs_menu_showing):
@@ -124,6 +140,7 @@ func _on_fs_menu_showing(menu:PopupMenu, container) -> void:
                         menu.add_separator(MenuEntriesRegistry.MENU_SEPARATOR["name"], MenuEntriesRegistry.MENU_SEPARATOR["id"])
                         menu.add_icon_item(MenuEntriesRegistry.MENU_RUN_TEST["icon"], MenuEntriesRegistry.MENU_RUN_TEST["name"], MenuEntriesRegistry.MENU_RUN_TEST["id"])
                         menu.add_icon_item(MenuEntriesRegistry.MENU_DEBUG_TEST["icon"], MenuEntriesRegistry.MENU_DEBUG_TEST["name"], MenuEntriesRegistry.MENU_DEBUG_TEST["id"])
+        _update_menu_item_availability(menu)
 
 func _on_fs_menu_id_pressed(id:int, menu:PopupMenu, container) -> void:
     if MenuEntriesRegistry.is_run_test_menu(id) or MenuEntriesRegistry.is_debug_test_menu(id):
@@ -155,6 +172,20 @@ func _on_fs_menu_closing(menu:PopupMenu) -> void:
         var menu_index:int = menu.get_item_index(id)
         if menu_index != -1:
             menu.remove_item(menu_index)
+
+func _update_menu_item_availability(menu:PopupMenu) -> void:
+    if is_instance_valid(menu):
+        var all_ids:PackedInt32Array = [
+            MenuEntriesRegistry.MENU_SEPARATOR["id"],
+            MenuEntriesRegistry.MENU_RUN_ALL_TESTS["id"],
+            MenuEntriesRegistry.MENU_DEBUG_ALL_TESTS["id"],
+            MenuEntriesRegistry.MENU_RUN_TEST["id"],
+            MenuEntriesRegistry.MENU_DEBUG_TEST["id"]
+        ]
+        for id in all_ids:
+            var menu_index:int = menu.get_item_index(id)
+            if menu_index != -1:
+                menu.set_item_disabled(menu_index, not _can_run_tests)
 
 func _get_popup_menus(parent_node:Node) -> Array[PopupMenu]:
     var menus:Array[PopupMenu] = []

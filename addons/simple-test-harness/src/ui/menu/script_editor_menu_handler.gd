@@ -20,6 +20,8 @@ extends RefCounted
 var _plugin:SimpleTestHarnessPlugin
 var _current_script_editor_popup_menu:PopupMenu
 
+var _can_run_tests:bool = true
+
 #------------------------------------------
 # Fonctions Godot redéfinies
 #------------------------------------------
@@ -33,11 +35,20 @@ func initialize() -> void:
         return
     _plugin = Engine.get_meta(SimpleTestHarnessPlugin.PLUGIN_ENGINE_META)
 
+    # To disable run actions when testsuite is already running
+    if Engine.has_meta(SimpleTestHarnessPlugin.PLUGIN_ORCHESTRATOR_META):
+        var orchestrator:STHOrchestrator = Engine.get_meta(SimpleTestHarnessPlugin.PLUGIN_ORCHESTRATOR_META)
+        orchestrator.on_state_changed.connect(_on_orchestrator_state_changed)
+
     # To detect script change and hook popup menu accordingly
     if not _plugin.get_editor_interface().get_script_editor().editor_script_changed.is_connected(_on_editor_script_changed):
         _plugin.get_editor_interface().get_script_editor().editor_script_changed.connect(_on_editor_script_changed)
 
 func finalize() -> void:
+    if Engine.has_meta(SimpleTestHarnessPlugin.PLUGIN_ORCHESTRATOR_META):
+        var orchestrator:STHOrchestrator = Engine.get_meta(SimpleTestHarnessPlugin.PLUGIN_ORCHESTRATOR_META)
+        orchestrator.on_state_changed.disconnect(_on_orchestrator_state_changed)
+
     if _plugin.get_editor_interface().get_script_editor().editor_script_changed.is_connected(_on_editor_script_changed):
         _plugin.get_editor_interface().get_script_editor().editor_script_changed.disconnect(_on_editor_script_changed)
 
@@ -55,6 +66,10 @@ func finalize() -> void:
 #------------------------------------------
 # Fonctions privées
 #------------------------------------------
+
+func _on_orchestrator_state_changed(state:int) -> void:
+    _can_run_tests = state == STHOrchestrator.ORCHESTRATOR_STATE_IDLE
+    _update_menu_item_availability()
 
 func _on_editor_script_changed(script) -> void:
     if is_instance_valid(_current_script_editor_popup_menu):
@@ -100,6 +115,7 @@ func on_script_editor_popup_menu_showing(menu:PopupMenu) -> void:
         menu.add_separator(MenuEntriesRegistry.MENU_SEPARATOR["name"], MenuEntriesRegistry.MENU_SEPARATOR["id"])
         menu.add_icon_item(MenuEntriesRegistry.MENU_RUN_TEST["icon"], MenuEntriesRegistry.MENU_RUN_TEST["name"], MenuEntriesRegistry.MENU_RUN_TEST["id"])
         menu.add_icon_item(MenuEntriesRegistry.MENU_DEBUG_TEST["icon"], MenuEntriesRegistry.MENU_DEBUG_TEST["name"], MenuEntriesRegistry.MENU_DEBUG_TEST["id"])
+        _update_menu_item_availability()
 
 func on_script_editor_popup_menu_id_selected(id:int, script:GDScript) -> void:
     if MenuEntriesRegistry.is_run_test_menu(id) or MenuEntriesRegistry.is_debug_test_menu(id):
@@ -120,6 +136,18 @@ func _remove_test_entries(menu:PopupMenu) -> void:
             var menu_index:int = menu.get_item_index(id)
             if menu_index != -1:
                 menu.remove_item(menu_index)
+
+func _update_menu_item_availability() -> void:
+    if is_instance_valid(_current_script_editor_popup_menu):
+        var all_ids:PackedInt32Array = [
+                MenuEntriesRegistry.MENU_SEPARATOR["id"],
+                MenuEntriesRegistry.MENU_RUN_TEST["id"],
+                MenuEntriesRegistry.MENU_DEBUG_TEST["id"]
+        ]
+        for id in all_ids:
+            var menu_index:int = _current_script_editor_popup_menu.get_item_index(id)
+            if menu_index != -1:
+                _current_script_editor_popup_menu.set_item_disabled(menu_index, not _can_run_tests)
 
 func _get_child_popup_menu(parent_node:Node) -> PopupMenu:
     for child in parent_node.get_children():
