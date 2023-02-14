@@ -215,6 +215,10 @@ func _on_orchestrator_idle() -> void:
     _run_failed_button.disabled = _indexed_tree_items.is_empty()
     _stop_tests_button.disabled = true
 
+    # If there was a running testsuite (testsuite aborted, crash, ...), pass all test case and
+    # test methods that dooes not have a result to the aborted state
+    _set_test_cases_aborted_if_no_result()
+
 func _on_orchestrator_preparing_testsuite() -> void:
     _clear_report()
     _show_tab()
@@ -416,19 +420,34 @@ func _can_collaspe_item(item:TreeItem) -> bool:
                 break
             tmp_item_parent = tmp_item_parent.get_parent()
     return can_collapse
+
+func _set_test_cases_aborted_if_no_result() -> void:
+    for item_key in _indexed_tree_items.keys():
+        var item:TreeItem = _indexed_tree_items[item_key]
+        if item.has_meta(ITEM_METADATA_NAME):
+            var meta = item.get_meta(ITEM_METADATA_NAME)
+            if meta is TestCaseMetadata:
+                if meta.test_case_result == -1:
+                    meta.test_case_result = STHTestCaseFinished.TEST_CASE_STATUS_ABORTED
+                    item.set_icon(0, IconRegistry.ICON_TEST_ABORTED)
+            elif meta is TestCaseMethodMetadata:
+                if meta.test_case_method_result == -1:
+                    meta.test_case_method_result = STHTestCaseMethodReport.TEST_CASE_METHOD_RESULT_ABORTED
+                    item.set_icon(0, IconRegistry.ICON_TEST_ABORTED)
+
 # -------------
 # Metadata classes
 # -------------
 
 class TestCaseMetadata extends RefCounted:
     var test_case_path:String
-    var test_case_result:int
+    var test_case_result:int = -1
 
 class TestCaseMethodMetadata extends RefCounted:
     var test_case_path:String
     var test_case_method_name:String
     var test_case_method_line_number:int
-    var test_case_method_result:int
+    var test_case_method_result:int = -1
     var test_case_method_logs:PackedStringArray
 
 class TestCaseMethodAssertionMetadata extends RefCounted:
