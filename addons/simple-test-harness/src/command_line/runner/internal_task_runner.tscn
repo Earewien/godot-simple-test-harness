@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://536qj8l3sp2e"]
-
-[ext_resource type="Script" path="res://addons/simple-test-harness/src/command_line/runner/internal_task_runner.gd" id="1_gd0v4"]
-
-[node name="InternalTaskRunner" type="Node2D"]
-script = ExtResource("1_gd0v4")

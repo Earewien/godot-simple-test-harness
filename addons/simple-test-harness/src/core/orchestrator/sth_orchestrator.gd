@@ -49,13 +49,14 @@ func _ready() -> void:
 # Fonctions publiques
 #------------------------------------------
 
-func run_test_suite_from_paths(paths:PackedStringArray) -> void:
+func run_test_suite_from_paths(paths:PackedStringArray, from_command_line:bool = false) -> void:
     if _state != ORCHESTRATOR_STATE_IDLE:
         push_error("Orchestrator can not run a new testsuite : not idle")
         return
 
     var command:STHRunTestsCommand = STHRunTestsCommand.new()
     command.lookup_paths = paths
+    command.from_command_line = from_command_line
     _pending_client_command = command
 
     _change_state(ORCHESTRATOR_STATE_PREPARING_TESTSUITE)

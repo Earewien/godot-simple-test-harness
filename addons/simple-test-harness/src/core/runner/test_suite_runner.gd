@@ -30,6 +30,7 @@ enum TestSuiteState {
 
 var _state:TestSuiteState
 var _current_runner:TestCaseRunner
+var _from_command_line:bool = false
 
 #------------------------------------------
 # Fonctions Godot redéfinies
@@ -67,6 +68,7 @@ func _on_sth_tcp_client_message_received(message:String) -> void:
         if message_as_object is STHRunSingleTestCommand:
             execution_plan = _prepare_single_test_method_plan(message_as_object)
         elif message_as_object is STHRunTestsCommand:
+            _from_command_line = message_as_object.from_command_line
             execution_plan = _prepare_tests_plan(message_as_object)
 
         var plan_ready_message:STHTestsuitePlanReady = STHTestsuitePlanReady.new()
@@ -138,7 +140,13 @@ func _execute_execution_plan(execution_plan:STHExecutionPlan) -> void:
     _notify_test_suite_finished(execution_time_ms)
 
     _state = TestSuiteState.DONE
-    get_tree().quit()
+    _tcp_client.stop()
+    remove_child(_tcp_client)
+    _tcp_client.queue_free()
+    _tcp_client = null
+
+    if not _from_command_line:
+        get_tree().quit()
 
 func _stop_testsuite(_object:STHStopTestsuite) -> void:
     _state = TestSuiteState.ABORTED
