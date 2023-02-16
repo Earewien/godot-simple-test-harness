@@ -48,14 +48,14 @@ const MENU_DEBUG_TEST_CASE: = {
 const MENU_RUN_TEST_CASE_METHOD: = {
     "name" : "Run test function",
     "id" : 1_888_007,
-    "icon" : IconRegistry.ICON_RUN_TEST,
+    "icon" : IconRegistry.ICON_RUN_TEST_METHOD,
     "shortcut" : [KEY_CTRL, KEY_ALT, KEY_M]
 }
 
 const MENU_DEBUG_TEST_CASE_METHOD: = {
     "name" : "Debug test function",
     "id" : 1_888_008,
-    "icon" : IconRegistry.ICON_DEBUG_TEST
+    "icon" : IconRegistry.ICON_DEBUG_TEST_METHOD
 }
 
 #------------------------------------------
