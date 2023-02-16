@@ -181,7 +181,7 @@ func _reload_gutter_for_script(script:GDScript) -> void:
 func _on_gutter_clicked(line:int, gutter_id:int, script:GDScript) -> void:
     if _cached_script_editors.has(script.resource_path):
         # Ok it's a GD script testcase !
-        # Force save, because if there is any unsaved changed, lines will not be propertly computed
+        # Force save, because if there is any unsaved changed, lines will not be properly computed
         var error:int = ResourceSaver.save(script, script.resource_path)
         if error != 0:
             push_error("Unable to save %s ! %s" % [script.resource_path, error_string(error)])

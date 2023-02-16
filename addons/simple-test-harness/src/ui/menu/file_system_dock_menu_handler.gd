@@ -57,6 +57,9 @@ func initialize() -> void:
 
         _initialize_popup_menu(_fs_tree_popup_menu, _fs_tree)
         _initialize_popup_menu(_fs_item_list_popup_menu, _fs_item_list)
+        # Shortcut in popup menus does not work, so do it manually
+        _initialize_shortcuts(_fs_tree)
+        _initialize_shortcuts(_fs_item_list)
 
         # To disable run actions when testsuite is already running
         if Engine.has_meta(SimpleTestHarnessPlugin.PLUGIN_ORCHESTRATOR_META):
@@ -104,8 +107,72 @@ func _initialize_popup_menu(menu:PopupMenu, container) -> void:
     if not menu.close_requested.is_connected(_on_fs_menu_closing):
         menu.close_requested.connect(_on_fs_menu_closing.bind(menu))
 
+func _initialize_shortcuts(node:Node) -> void:
+    if node.has_meta("sth_hook_shortcut"):
+        node.remove_child(node.get_meta("sth_hook_shortcut"))
+        node.get_meta("sth_hook_shortcut").queue_free()
+        node.remove_meta("sth_hook_shortcut")
+
+    var shortcut_handler:STHShortcutHandler = preload("res://addons/simple-test-harness/src/ui/shortcut/sth_shortcut_handler.tscn").instantiate()
+    node.add_child(shortcut_handler)
+    node.set_meta("sth_hook_shortcut", shortcut_handler)
+
+    # For test cases in folders
+    shortcut_handler.add_shortcut(STHShortcutFactory.get_shortcut(MenuEntriesRegistry.MENU_RUN_ALL_TESTS_IN_DIRECTORY), _get_shortcut_run_test_cases_in_folder_condition.bind(node), _get_shortcut_run_test_cases_in_folder_action.bind(node))
+     # For selected test cases only
+    shortcut_handler.add_shortcut(STHShortcutFactory.get_shortcut(MenuEntriesRegistry.MENU_RUN_TEST_CASE), _get_shortcut_run_test_case_condition.bind(node), _get_shortcut_run_test_case_action.bind(node))
+
+func _get_shortcut_run_test_cases_in_folder_condition(node:Node) -> bool:
+    if not _can_run_tests:
+        return false
+
+    if Engine.get_main_loop().root.gui_get_focus_owner() != node:
+        return false
+
+    return true
+
+func _get_shortcut_run_test_case_condition(node:Node) -> bool:
+    if not _can_run_tests:
+        return false
+
+    if Engine.get_main_loop().root.gui_get_focus_owner() != node:
+        return false
+
+    var selected_resource_paths:PackedStringArray = _get_selected_resource_paths(node)
+    if not selected_resource_paths.is_empty():
+        return selected_resource_paths.size() == 1 and FileAccess.file_exists(selected_resource_paths[0])
+
+    return true
+
+func _get_shortcut_run_test_cases_in_folder_action(node:Node) -> void:
+    _do_execute_tests(node, false)
+
+func _get_shortcut_run_test_case_action(node:Node) -> void:
+    _do_execute_tests(node, false)
 
 func _on_fs_menu_showing(menu:PopupMenu, container) -> void:
+    var selected_resource_paths:PackedStringArray = _get_selected_resource_paths(container)
+
+    if not selected_resource_paths.is_empty():
+        if (selected_resource_paths.size() == 1 and DirAccess.dir_exists_absolute(selected_resource_paths[0])) or selected_resource_paths.size() > 1:
+            # It's a dir ! We show menu to run all tests in this folder
+            menu.add_separator(MenuEntriesRegistry.MENU_SEPARATOR["name"], MenuEntriesRegistry.MENU_SEPARATOR["id"])
+            menu.add_icon_shortcut(MenuEntriesRegistry.MENU_RUN_ALL_TESTS_IN_DIRECTORY["icon"], STHShortcutFactory.get_shortcut(MenuEntriesRegistry.MENU_RUN_ALL_TESTS_IN_DIRECTORY), MenuEntriesRegistry.MENU_RUN_ALL_TESTS_IN_DIRECTORY["id"])
+            menu.add_icon_item(MenuEntriesRegistry.MENU_DEBUG_ALL_TESTS_IN_DIRECTORY["icon"], MenuEntriesRegistry.MENU_DEBUG_ALL_TESTS_IN_DIRECTORY["name"], MenuEntriesRegistry.MENU_DEBUG_ALL_TESTS_IN_DIRECTORY["id"])
+        elif selected_resource_paths.size() == 1 and FileAccess.file_exists(selected_resource_paths[0]):
+            # It's a file ! Maybe a GDScript ! Maybe a TestCase !
+            if selected_resource_paths[0].get_extension() == "gd":
+                var script = ResourceLoader.load(selected_resource_paths[0])
+                if script is GDScript:
+                    var parsed_gd_script:ParsedGDScript = ParsedGDScript.new()
+                    parsed_gd_script.parse(script)
+                    if parsed_gd_script.script_parent_class_name == "TestCase":
+                        menu.add_separator(MenuEntriesRegistry.MENU_SEPARATOR["name"], MenuEntriesRegistry.MENU_SEPARATOR["id"])
+                        menu.add_icon_shortcut(MenuEntriesRegistry.MENU_RUN_TEST_CASE["icon"], STHShortcutFactory.get_shortcut(MenuEntriesRegistry.MENU_RUN_TEST_CASE), MenuEntriesRegistry.MENU_RUN_TEST_CASE["id"])
+                        menu.add_icon_item(MenuEntriesRegistry.MENU_DEBUG_TEST_CASE["icon"], MenuEntriesRegistry.MENU_DEBUG_TEST_CASE["name"], MenuEntriesRegistry.MENU_DEBUG_TEST_CASE["id"])
+        _update_menu_item_availability(menu)
+
+func _get_selected_resource_paths(container:Node) -> PackedStringArray:
     var selected_resource_paths:PackedStringArray = []
 
     if container is Tree:
@@ -123,50 +190,37 @@ func _on_fs_menu_showing(menu:PopupMenu, container) -> void:
         for i in selected_items_indexes:
             selected_resource_paths.append(container.get_item_metadata(i))
 
-    if not selected_resource_paths.is_empty():
-        if (selected_resource_paths.size() == 1 and DirAccess.dir_exists_absolute(selected_resource_paths[0])) or selected_resource_paths.size() > 1:
-            # It's a dir ! We show menu to run all tests in this folder
-            menu.add_separator(MenuEntriesRegistry.MENU_SEPARATOR["name"], MenuEntriesRegistry.MENU_SEPARATOR["id"])
-            menu.add_icon_item(MenuEntriesRegistry.MENU_RUN_ALL_TESTS["icon"], MenuEntriesRegistry.MENU_RUN_ALL_TESTS["name"], MenuEntriesRegistry.MENU_RUN_ALL_TESTS["id"])
-            menu.add_icon_item(MenuEntriesRegistry.MENU_DEBUG_ALL_TESTS["icon"], MenuEntriesRegistry.MENU_DEBUG_ALL_TESTS["name"], MenuEntriesRegistry.MENU_DEBUG_ALL_TESTS["id"])
-        elif selected_resource_paths.size() == 1 and FileAccess.file_exists(selected_resource_paths[0]):
-            # It's a file ! Maybe a GDScript ! Maybe a TestCase !
-            if selected_resource_paths[0].get_extension() == "gd":
-                var script = ResourceLoader.load(selected_resource_paths[0])
-                if script is GDScript:
-                    var parsed_gd_script:ParsedGDScript = ParsedGDScript.new()
-                    parsed_gd_script.parse(script)
-                    if parsed_gd_script.script_parent_class_name == "TestCase":
-                        menu.add_separator(MenuEntriesRegistry.MENU_SEPARATOR["name"], MenuEntriesRegistry.MENU_SEPARATOR["id"])
-                        menu.add_icon_item(MenuEntriesRegistry.MENU_RUN_TEST["icon"], MenuEntriesRegistry.MENU_RUN_TEST["name"], MenuEntriesRegistry.MENU_RUN_TEST["id"])
-                        menu.add_icon_item(MenuEntriesRegistry.MENU_DEBUG_TEST["icon"], MenuEntriesRegistry.MENU_DEBUG_TEST["name"], MenuEntriesRegistry.MENU_DEBUG_TEST["id"])
-        _update_menu_item_availability(menu)
+    return selected_resource_paths
 
 func _on_fs_menu_id_pressed(id:int, menu:PopupMenu, container) -> void:
-    if MenuEntriesRegistry.is_run_test_menu(id) or MenuEntriesRegistry.is_debug_test_menu(id):
+    if MenuEntriesRegistry.is_run_test_case_menu(id) or MenuEntriesRegistry.is_debug_test_case_menu(id):
         var resource_paths:PackedStringArray = []
-        var debug_mode:bool = MenuEntriesRegistry.is_debug_test_menu(id)
+        var debug_mode:bool = MenuEntriesRegistry.is_debug_test_case_menu(id)
+        _do_execute_tests(container, debug_mode)
 
-        if container is Tree:
-             # Selection from FSTree
-            var selected_folder_or_file_item:TreeItem = container.get_selected()
-            var resource_path:String = selected_folder_or_file_item.get_metadata(0)
-            resource_paths.append(resource_path)
-        elif container is ItemList:
-             # Selection from splitted view
-            var selected_items_indexes:PackedInt32Array = container.get_selected_items()
-            for i in selected_items_indexes:
-                resource_paths.append(container.get_item_metadata(i))
+func _do_execute_tests(container:Node, debug_mode:bool) -> void:
+    var resource_paths:PackedStringArray = []
+    if container is Tree:
+            # Selection from FSTree
+        var selected_folder_or_file_item:TreeItem = container.get_selected()
+        var resource_path:String = selected_folder_or_file_item.get_metadata(0)
+        resource_paths.append(resource_path)
+    elif container is ItemList:
+            # Selection from splitted view
+        var selected_items_indexes:PackedInt32Array = container.get_selected_items()
+        for i in selected_items_indexes:
+            resource_paths.append(container.get_item_metadata(i))
 
+    if not resource_paths.is_empty():
         _plugin.execute_test_cases_from_path(resource_paths, debug_mode)
 
 func _on_fs_menu_closing(menu:PopupMenu) -> void:
     var all_ids:PackedInt32Array = [
         MenuEntriesRegistry.MENU_SEPARATOR["id"],
-        MenuEntriesRegistry.MENU_RUN_ALL_TESTS["id"],
-        MenuEntriesRegistry.MENU_DEBUG_ALL_TESTS["id"],
-        MenuEntriesRegistry.MENU_RUN_TEST["id"],
-        MenuEntriesRegistry.MENU_DEBUG_TEST["id"]
+        MenuEntriesRegistry.MENU_RUN_ALL_TESTS_IN_DIRECTORY["id"],
+        MenuEntriesRegistry.MENU_DEBUG_ALL_TESTS_IN_DIRECTORY["id"],
+        MenuEntriesRegistry.MENU_RUN_TEST_CASE["id"],
+        MenuEntriesRegistry.MENU_DEBUG_TEST_CASE["id"]
     ]
     for id in all_ids:
         var menu_index:int = menu.get_item_index(id)
@@ -177,10 +231,10 @@ func _update_menu_item_availability(menu:PopupMenu) -> void:
     if is_instance_valid(menu):
         var all_ids:PackedInt32Array = [
             MenuEntriesRegistry.MENU_SEPARATOR["id"],
-            MenuEntriesRegistry.MENU_RUN_ALL_TESTS["id"],
-            MenuEntriesRegistry.MENU_DEBUG_ALL_TESTS["id"],
-            MenuEntriesRegistry.MENU_RUN_TEST["id"],
-            MenuEntriesRegistry.MENU_DEBUG_TEST["id"]
+            MenuEntriesRegistry.MENU_RUN_ALL_TESTS_IN_DIRECTORY["id"],
+            MenuEntriesRegistry.MENU_DEBUG_ALL_TESTS_IN_DIRECTORY["id"],
+            MenuEntriesRegistry.MENU_RUN_TEST_CASE["id"],
+            MenuEntriesRegistry.MENU_DEBUG_TEST_CASE["id"]
         ]
         for id in all_ids:
             var menu_index:int = menu.get_item_index(id)

@@ -90,7 +90,9 @@ func _on_editor_script_changed(script) -> void:
             # Yes, hook menu !
             var script_editor:ScriptEditorBase = _plugin.get_editor_interface().get_script_editor().get_current_editor()
             _current_script_editor_popup_menu = _get_child_popup_menu(script_editor)
-            _add_test_entries_to_menu_if_needed(_current_script_editor_popup_menu, script)
+            _add_test_entries_to_menu_if_needed(_current_script_editor_popup_menu, script, parsed_gd_script)
+            # And hook shortcut if needed ! Shortcuts don't work on those popup menus, have to do it manually
+            _install_shortcuts_on_editor(script_editor)
         else:
             if is_instance_valid(_current_script_editor_popup_menu):
                 _remove_test_entries(_current_script_editor_popup_menu)
@@ -98,29 +100,42 @@ func _on_editor_script_changed(script) -> void:
         if is_instance_valid(_current_script_editor_popup_menu):
             _remove_test_entries(_current_script_editor_popup_menu)
 
-func _add_test_entries_to_menu_if_needed(menu:PopupMenu, script) -> void:
+func _add_test_entries_to_menu_if_needed(menu:PopupMenu, script:GDScript, parsed_script:ParsedGDScript) -> void:
     if menu == null:
         push_error("A Popup menu should be present to ass test entries")
     else:
         menu.set_meta("is_on_testcase", true)
         if not menu.about_to_popup.is_connected(on_script_editor_popup_menu_showing):
-            menu.about_to_popup.connect(on_script_editor_popup_menu_showing.bind(menu))
+            menu.about_to_popup.connect(on_script_editor_popup_menu_showing.bind(menu, parsed_script))
         if not menu.id_pressed.is_connected(on_script_editor_popup_menu_id_selected):
-            menu.id_pressed.connect(on_script_editor_popup_menu_id_selected.bind(script))
+            menu.id_pressed.connect(on_script_editor_popup_menu_id_selected.bind(script, parsed_script))
         if not menu.close_requested.is_connected(on_script_editor_popup_menu_closing):
             menu.close_requested.connect(on_script_editor_popup_menu_closing.bind(menu))
 
-func on_script_editor_popup_menu_showing(menu:PopupMenu) -> void:
+func on_script_editor_popup_menu_showing(menu:PopupMenu, parsed_script:ParsedGDScript) -> void:
     if menu.has_meta("is_on_testcase"):
         menu.add_separator(MenuEntriesRegistry.MENU_SEPARATOR["name"], MenuEntriesRegistry.MENU_SEPARATOR["id"])
-        menu.add_icon_item(MenuEntriesRegistry.MENU_RUN_TEST["icon"], MenuEntriesRegistry.MENU_RUN_TEST["name"], MenuEntriesRegistry.MENU_RUN_TEST["id"])
-        menu.add_icon_item(MenuEntriesRegistry.MENU_DEBUG_TEST["icon"], MenuEntriesRegistry.MENU_DEBUG_TEST["name"], MenuEntriesRegistry.MENU_DEBUG_TEST["id"])
+        menu.add_icon_shortcut(MenuEntriesRegistry.MENU_RUN_TEST_CASE["icon"], STHShortcutFactory.get_shortcut(MenuEntriesRegistry.MENU_RUN_TEST_CASE), MenuEntriesRegistry.MENU_RUN_TEST_CASE["id"])
+        menu.add_icon_item(MenuEntriesRegistry.MENU_DEBUG_TEST_CASE["icon"], MenuEntriesRegistry.MENU_DEBUG_TEST_CASE["name"], MenuEntriesRegistry.MENU_DEBUG_TEST_CASE["id"])
+
+        # If carret is after a test function, add options to run test method
+        if _get_function_at_caret_position_in_current_editor(parsed_script) != null:
+            menu.add_icon_shortcut(MenuEntriesRegistry.MENU_RUN_TEST_CASE_METHOD["icon"], STHShortcutFactory.get_shortcut(MenuEntriesRegistry.MENU_RUN_TEST_CASE_METHOD), MenuEntriesRegistry.MENU_RUN_TEST_CASE_METHOD["id"])
+            menu.add_icon_item(MenuEntriesRegistry.MENU_DEBUG_TEST_CASE_METHOD["icon"], MenuEntriesRegistry.MENU_DEBUG_TEST_CASE_METHOD["name"], MenuEntriesRegistry.MENU_DEBUG_TEST_CASE_METHOD["id"])
+
         _update_menu_item_availability()
 
-func on_script_editor_popup_menu_id_selected(id:int, script:GDScript) -> void:
-    if MenuEntriesRegistry.is_run_test_menu(id) or MenuEntriesRegistry.is_debug_test_menu(id):
-        var debug_mode:bool = MenuEntriesRegistry.is_debug_test_menu(id)
+func on_script_editor_popup_menu_id_selected(id:int, script:GDScript, parsed_script:ParsedGDScript) -> void:
+    if MenuEntriesRegistry.is_run_test_case_menu(id) or MenuEntriesRegistry.is_debug_test_case_menu(id):
+        var debug_mode:bool = MenuEntriesRegistry.is_debug_test_case_menu(id)
         _plugin.execute_test_cases_from_path([script.resource_path], debug_mode)
+    elif MenuEntriesRegistry.is_run_test_case_method_menu(id) or MenuEntriesRegistry.is_debug_test_case_method_menu(id):
+        var debug_mode:bool = MenuEntriesRegistry.is_debug_test_case_method_menu(id)
+        var test_function:ParsedGDScriptFunction = _get_function_at_caret_position_in_current_editor(parsed_script)
+        if test_function != null:
+            _plugin.execute_test_case_method(script.resource_path, test_function.function_name, debug_mode)
+        else:
+            push_error("Unable to find test case method to run...")
 
 func on_script_editor_popup_menu_closing(menu:PopupMenu) -> void:
     _remove_test_entries(menu)
@@ -129,8 +144,10 @@ func _remove_test_entries(menu:PopupMenu) -> void:
     if menu:
         var all_ids:PackedInt32Array = [
             MenuEntriesRegistry.MENU_SEPARATOR["id"],
-            MenuEntriesRegistry.MENU_RUN_TEST["id"],
-            MenuEntriesRegistry.MENU_DEBUG_TEST["id"]
+            MenuEntriesRegistry.MENU_RUN_TEST_CASE["id"],
+            MenuEntriesRegistry.MENU_DEBUG_TEST_CASE["id"],
+            MenuEntriesRegistry.MENU_RUN_TEST_CASE_METHOD["id"],
+            MenuEntriesRegistry.MENU_DEBUG_TEST_CASE_METHOD["id"]
         ]
         for id in all_ids:
             var menu_index:int = menu.get_item_index(id)
@@ -140,14 +157,121 @@ func _remove_test_entries(menu:PopupMenu) -> void:
 func _update_menu_item_availability() -> void:
     if is_instance_valid(_current_script_editor_popup_menu):
         var all_ids:PackedInt32Array = [
-                MenuEntriesRegistry.MENU_SEPARATOR["id"],
-                MenuEntriesRegistry.MENU_RUN_TEST["id"],
-                MenuEntriesRegistry.MENU_DEBUG_TEST["id"]
+            MenuEntriesRegistry.MENU_SEPARATOR["id"],
+            MenuEntriesRegistry.MENU_RUN_TEST_CASE["id"],
+            MenuEntriesRegistry.MENU_DEBUG_TEST_CASE["id"],
+            MenuEntriesRegistry.MENU_RUN_TEST_CASE_METHOD["id"],
+            MenuEntriesRegistry.MENU_DEBUG_TEST_CASE_METHOD["id"]
         ]
         for id in all_ids:
             var menu_index:int = _current_script_editor_popup_menu.get_item_index(id)
             if menu_index != -1:
                 _current_script_editor_popup_menu.set_item_disabled(menu_index, not _can_run_tests)
+
+func _install_shortcuts_on_editor(script_editor:ScriptEditorBase) -> void:
+    if script_editor.has_meta("sth_hook_shortcut"):
+        script_editor.get_base_editor().remove_child(script_editor.get_meta("sth_hook_shortcut"))
+        script_editor.get_meta("sth_hook_shortcut").queue_free()
+        script_editor.remove_meta("sth_hook_shortcut")
+
+    var shortcut_handler:STHShortcutHandler = preload("res://addons/simple-test-harness/src/ui/shortcut/sth_shortcut_handler.tscn").instantiate()
+    script_editor.get_base_editor().add_child(shortcut_handler)
+    script_editor.set_meta("sth_hook_shortcut", shortcut_handler)
+
+    # For test cases
+    shortcut_handler.add_shortcut(STHShortcutFactory.get_shortcut(MenuEntriesRegistry.MENU_RUN_TEST_CASE), _get_shortcut_run_test_case_condition.bind(script_editor), _get_shortcut_run_test_case_action.bind(script_editor))
+    # For methods
+    shortcut_handler.add_shortcut(STHShortcutFactory.get_shortcut(MenuEntriesRegistry.MENU_RUN_TEST_CASE_METHOD), _get_shortcut_run_test_case_method_condition.bind(script_editor), _get_shortcut_run_test_case_method_action.bind(script_editor))
+
+func _get_shortcut_run_test_case_condition(script_editor:ScriptEditorBase) -> bool:
+    if not _can_run_tests:
+        return false
+
+    if _plugin.get_editor_interface().get_script_editor().get_current_editor() != script_editor:
+        return false
+
+    if Engine.get_main_loop().root.gui_get_focus_owner() != script_editor.get_base_editor():
+        return false
+
+    var script_path = _get_edited_script_path(script_editor)
+    if script_path:
+        var parsed_script:ParsedGDScript = ParsedGDScript.new()
+        parsed_script.parse(GDScriptFactory.get_gdscript(script_path))
+        return parsed_script.script_parent_class_name == "TestCase"
+    return false
+
+func _get_shortcut_run_test_case_method_condition(script_editor:ScriptEditorBase) -> bool:
+    if not _can_run_tests:
+        return false
+
+    if _plugin.get_editor_interface().get_script_editor().get_current_editor() != script_editor:
+        return false
+
+    if Engine.get_main_loop().root.gui_get_focus_owner() != script_editor.get_base_editor():
+        return false
+
+    var script_path = _get_edited_script_path(script_editor)
+    if script_path:
+        var parsed_script:ParsedGDScript = ParsedGDScript.new()
+        parsed_script.parse(GDScriptFactory.get_gdscript(script_path))
+        if parsed_script.script_parent_class_name == "TestCase":
+            return _get_function_at_caret_position_in_current_editor(parsed_script) != null
+
+    return false
+
+func _get_shortcut_run_test_case_action(script_editor:ScriptEditorBase) -> void:
+    var script_path = _get_edited_script_path(script_editor)
+    if script_path:
+         # Force save, because if there is any unsaved changed, lines will not be properly computed
+        var error:int = ResourceSaver.save(GDScriptFactory.get_gdscript(script_path), script_path)
+        if error != 0:
+            push_error("Unable to save %s ! %s" % [script_path, error_string(error)])
+        else:
+            script_editor.get_base_editor().tag_saved_version()
+            _plugin.execute_test_cases_from_path([script_path], false)
+
+func _get_shortcut_run_test_case_method_action(script_editor:ScriptEditorBase) -> void:
+    var script_path = _get_edited_script_path(script_editor)
+    if script_path:
+         # Force save, because if there is any unsaved changed, lines will not be properly computed
+        var error:int = ResourceSaver.save(_plugin.get_editor_interface().get_script_editor().get_current_script(), script_path)
+        if error != 0:
+            push_error("Unable to save %s ! %s" % [script_path, error_string(error)])
+        else:
+            script_editor.get_base_editor().tag_saved_version()
+            var parsed_script:ParsedGDScript = ParsedGDScript.new()
+            parsed_script.parse(GDScriptFactory.get_gdscript(script_path))
+            _plugin.execute_test_case_method(script_path, _get_function_at_caret_position_in_current_editor(parsed_script).function_name, false)
+
+func _get_edited_script_path(script_editor:ScriptEditorBase) -> Variant:
+    if script_editor.has_meta("_edit_res_path"):
+        return script_editor.get_meta("_edit_res_path")
+    return null
+
+func _get_edited_script(script_editor:ScriptEditorBase) -> Script:
+    var script_path = _get_edited_script_path(script_editor)
+    if script_path:
+        for script in _plugin.get_editor_interface().get_script_editor().get_open_scripts():
+            if script.resource_path == script_path:
+                return script
+    return null
+
+func _get_function_at_caret_position_in_current_editor(parsed_script:ParsedGDScript) -> ParsedGDScriptFunction:
+    var result:ParsedGDScriptFunction = null
+    var script_editor:ScriptEditorBase = _plugin.get_editor_interface().get_script_editor().get_current_editor()
+    var carret_line:int = script_editor.get_base_editor().get_caret_line(0)
+    var script_functions:Array[ParsedGDScriptFunction] = Array(parsed_script.script_functions)
+    script_functions.sort_custom(func(a,b):return a.function_line_number < b.function_line_number)
+
+    for i in script_functions.size():
+        var function:ParsedGDScriptFunction = script_functions[i]
+        if _is_executable_test_function(function):
+            var next_function_line_number:int = 9999999 if i == script_functions.size() - 1 else script_functions[i+1].function_line_number
+            if carret_line < next_function_line_number and carret_line >= function.function_line_number:
+                result = function
+                break
+
+    return result
 
 func _get_child_popup_menu(parent_node:Node) -> PopupMenu:
     for child in parent_node.get_children():
@@ -171,3 +295,11 @@ func _get_first_item_list(parent_node:Node) -> ItemList:
         if item_list:
             return item_list
     return null
+
+func _is_executable_test_function(function:ParsedGDScriptFunction) -> bool:
+    return function.function_name.begins_with("test") \
+        and function.function_returned_type == TYPE_NIL \
+        and function.function_arguments.is_empty() \
+        and not function.is_static \
+        and not function.is_virtual \
+        and not function.is_editor
