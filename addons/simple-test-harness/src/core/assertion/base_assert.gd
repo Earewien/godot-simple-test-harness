@@ -43,6 +43,10 @@ func _do_report(predicate:Callable, desc_success:String, desc_failure:String = d
     report.description = desc_success if report.is_success else desc_failure
     _reporter.assertion_reports.append(report)
 
+    if not report.is_success:
+        var at_line_message:String = "" if report.line_number == -1 else " at line %s" % report.line_number
+        printerr("ASSERTION FAILED %s: %s" % [at_line_message, report.description])
+
 func _get_assertion_line_number() -> int:
     for stack in get_stack():
         if stack["function"] == _reporter.test_method_name:

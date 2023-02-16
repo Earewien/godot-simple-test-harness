@@ -84,6 +84,8 @@ func until(predicate:Callable) -> void:
             report.description = "%s not fulfilled in less than %ss" % [message_prefix, _at_most_duration_seconds]
     _reporter.assertion_reports.append(report)
 
+    _print_assertion_failed_if_needed(report)
+
 func until_signal_emitted(sig:Signal) -> void:
     await _until_signal_emitted(sig, false)
 
@@ -170,6 +172,8 @@ func _until_signal_emitted(sig:Signal, check_arguments:bool = false, args:Array 
     report.description = report_description
     _reporter.assertion_reports.append(report)
 
+    _print_assertion_failed_if_needed(report)
+
 func _get_assertion_line_number() -> int:
     for stack in get_stack():
         if stack["function"] == _reporter.test_method_name:
@@ -180,7 +184,7 @@ func _get_initial_await_failed_report() -> AssertionReport:
     var await_fail_report:AssertionReport = AssertionReport.new()
     await_fail_report.line_number = _get_assertion_line_number()
     await_fail_report.is_success = false
-    await_fail_report.description = "Await utility called without 'await' keyword. Coroutin must be called within 'await'"
+    await_fail_report.description = "Await utility called without 'await' keyword. Coroutine must be called within 'await'"
     return await_fail_report
 
 func _get_await_signal_too_much_arguments_failed_report() -> AssertionReport:
@@ -189,3 +193,8 @@ func _get_await_signal_too_much_arguments_failed_report() -> AssertionReport:
     await_fail_report.is_success = false
     await_fail_report.description = "Await signal emitted with args supports maximum 5 arguments"
     return await_fail_report
+
+func _print_assertion_failed_if_needed(report:AssertionReport) -> void:
+    if not report.is_success:
+        var at_line_message:String = "" if report.line_number == -1 else " at line %s" % report.line_number
+        printerr("ASSERTION FAILED %s: %s" % [at_line_message, report.description])
