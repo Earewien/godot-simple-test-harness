@@ -30,8 +30,6 @@ var _plugin:SimpleTestHarnessPlugin
 @onready var _stop_tests_button:TextureButton = %StopButton
 @onready var _logs_text_edit:TextEdit = %LogsTextEdit
 
-var _tab_container:TabContainer
-
 var _indexed_tree_items:Dictionary = {}
 
 #------------------------------------------
@@ -63,12 +61,10 @@ func _ready() -> void:
 
 func _notification(what: int) -> void:
     if  what == NOTIFICATION_PREDELETE:
-        if is_instance_valid(_tab_container):
-            _tab_container = null
-            if Engine.has_meta(SimpleTestHarnessPlugin.PLUGIN_ORCHESTRATOR_META):
-                var orchestrator:STHOrchestrator = Engine.get_meta(SimpleTestHarnessPlugin.PLUGIN_ORCHESTRATOR_META)
-                orchestrator.on_state_changed.disconnect(_on_orchestrator_state_changed)
-                orchestrator.on_runner_message_received.disconnect(_on_orchestrator_runner_message_received)
+        if Engine.has_meta(SimpleTestHarnessPlugin.PLUGIN_ORCHESTRATOR_META):
+            var orchestrator:STHOrchestrator = Engine.get_meta(SimpleTestHarnessPlugin.PLUGIN_ORCHESTRATOR_META)
+            orchestrator.on_state_changed.disconnect(_on_orchestrator_state_changed)
+            orchestrator.on_runner_message_received.disconnect(_on_orchestrator_runner_message_received)
 
 #------------------------------------------
 # Fonctions publiques
@@ -82,11 +78,11 @@ func _notification(what: int) -> void:
 # UI Tab Related
 # -------------
 func _after_ready() -> void:
-    _tab_container = _get_parent_tab_container()
+    var tab_container:TabContainer = _get_parent_tab_container()
 
     # Has to check : in production it's always ok, but when I develop the addon, if I opened this scene, I'm not in a tab container !
-    if is_instance_valid(_tab_container):
-        _tab_container.set_tab_icon(_get_current_index_in_tab_container(), IconRegistry.ICON_DOCK)
+    if is_instance_valid(tab_container):
+        tab_container.set_tab_icon(_get_current_index_in_tab_container(tab_container), IconRegistry.ICON_DOCK)
         if Engine.has_meta(SimpleTestHarnessPlugin.PLUGIN_ORCHESTRATOR_META):
             var orchestrator:STHOrchestrator = Engine.get_meta(SimpleTestHarnessPlugin.PLUGIN_ORCHESTRATOR_META)
             orchestrator.on_state_changed.connect(_on_orchestrator_state_changed)
@@ -101,18 +97,20 @@ func _get_parent_tab_container() -> TabContainer:
     return null
 
 # Tab index can change since user can drag the tab left/right. So we need to request it each time we use it
-func _get_current_index_in_tab_container() -> int:
-    if is_instance_valid(_tab_container):
-        for i in _tab_container.get_tab_count():
-            if _tab_container.get_tab_title(i) == TAB_NAME:
+func _get_current_index_in_tab_container(tab_container:TabContainer) -> int:
+    if is_instance_valid(tab_container):
+        for i in tab_container.get_tab_count():
+            if tab_container.get_tab_title(i) == TAB_NAME:
                 return i
     return -1
 
 # Pop this tab as active tab
 func _show_tab() -> void:
-    var tab_index:int = _get_current_index_in_tab_container()
-    if tab_index != -1:
-        _tab_container.current_tab = tab_index
+    var tab_container:TabContainer = _get_parent_tab_container()
+    if is_instance_valid(tab_container):
+        var tab_index:int = _get_current_index_in_tab_container(tab_container)
+        if tab_index != -1:
+            tab_container.current_tab = tab_index
 
 # -------------
 # UI
