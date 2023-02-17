@@ -81,7 +81,7 @@ func is_positive_or_zero() -> AssertThatInt:
 
 func is_odd() -> AssertThatInt:
     _do_report( \
-        func(): return _value % 2 == 0, \
+        func(): return _value % 2 != 0, \
         "Value is odd", \
         "Expected value to be odd, got '%s'" % _value
     )
@@ -89,7 +89,7 @@ func is_odd() -> AssertThatInt:
 
 func is_even() -> AssertThatInt:
     _do_report( \
-        func(): return _value % 2 != 0, \
+        func(): return _value % 2 == 0, \
         "Value is even", \
         "Expected value to be even, got '%s'" % _value
     )

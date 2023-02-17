@@ -85,22 +85,24 @@ func test_is_positive_or_zero() -> void:
     _assertion_reporter.reset()
 
 func test_is_odd() -> void:
-    _local_assert_that_int(2).is_odd()
-    _local_assert_that_int(4).is_odd()
-    _local_assert_that_int(-4).is_odd()
+    _local_assert_that_int(-3).is_odd()
+    _local_assert_that_int(5).is_odd()
+    _local_assert_that_int(1).is_odd()
     assert_false(_assertion_reporter.has_failures())
 
-    _local_assert_that_int(-3).is_odd()
+    _local_assert_that_int(0).is_odd()
     assert_true(_assertion_reporter.has_failures())
     _assertion_reporter.reset()
+    _local_assert_that_int(4).is_odd()
+    assert_true(_assertion_reporter.has_failures())
 
 func test_is_even() -> void:
-    _local_assert_that_int(1).is_even()
-    _local_assert_that_int(3).is_even()
-    _local_assert_that_int(-1).is_even()
+    _local_assert_that_int(0).is_even()
+    _local_assert_that_int(2).is_even()
+    _local_assert_that_int(-6).is_even()
     assert_false(_assertion_reporter.has_failures())
 
-    _local_assert_that_int(6).is_even()
+    _local_assert_that_int(3).is_even()
     assert_true(_assertion_reporter.has_failures())
     _assertion_reporter.reset()
 
