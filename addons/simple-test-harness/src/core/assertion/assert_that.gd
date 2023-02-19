@@ -63,7 +63,7 @@ func is_not_null() -> AssertThat:
 func is_equal_to(expected:Variant) -> AssertThat:
     _do_report( \
         func(): return _value == expected, \
-        "Value is '%s'" % expected, \
+        "Value is '%s'" % [expected], \
         "Expected value to be equal to '%s', got '%s'" % [expected, _value]
     )
     return self
@@ -71,7 +71,7 @@ func is_equal_to(expected:Variant) -> AssertThat:
 func is_not_equal_to(expected:Variant) -> AssertThat:
     _do_report( \
         func(): return _value != expected, \
-        "Value is not '%s'" % expected, \
+        "Value is not '%s'" % [expected], \
         "Expected value must not be equal to '%s'" % [expected]
     )
     return self
@@ -79,7 +79,7 @@ func is_not_equal_to(expected:Variant) -> AssertThat:
 func is_same_has(expected:Variant) -> AssertThat:
     _do_report( \
         func(): return is_same(_value, expected), \
-        "Value is '%s'" % expected, \
+        "Value is '%s'" % [expected], \
         "Expected value to be '%s', got '%s'" % [expected, _value]
     )
     return self
@@ -87,7 +87,7 @@ func is_same_has(expected:Variant) -> AssertThat:
 func is_not_same_has(expected:Variant) -> AssertThat:
     _do_report( \
         func(): return not is_same(_value, expected), \
-        "Value is not '%s'" % expected, \
+        "Value is not '%s'" % [expected], \
         "Expected value to not be '%s'" % [expected, _value]
     )
     return self
