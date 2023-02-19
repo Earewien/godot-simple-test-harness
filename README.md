@@ -11,3 +11,12 @@ A simple (yet powerful) test harness to write and run unit tests for [Godot Engi
 # Documentation
 
 See [Wiki](https://github.com/AdrienQuillet/godot-simple-test-harness/wiki) for complete documentation 
+
+# Illustrations
+
+<p align="center">
+<img width="500" src="https://user-images.githubusercontent.com/121614863/219970283-c4cbe256-eac3-41ce-af20-f65cddccb1e6.gif"> <br/><br/>
+<img width="500" src="https://user-images.githubusercontent.com/121614863/219970141-2b4b586e-456e-4611-9768-57b9b72d902a.png">
+<img width="300" src="https://user-images.githubusercontent.com/121614863/219970205-c6c95355-3f84-4dc8-b121-b3f74f9500ba.png">
+</p>
+
