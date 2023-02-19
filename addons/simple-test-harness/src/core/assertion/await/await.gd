@@ -108,49 +108,33 @@ func _until_signal_emitted(sig:Signal, check_arguments:bool = false, args:Array 
 
     # Reset state
     _current_tested_signal_received = false
-    _current_tested_signal_arguments = []
 
     var start_tick_ms:int = Time.get_ticks_msec()
     var ellapsed_time_ms:float = 0
 
-    var signal_receiver:Callable = func(arg1 = null, arg2 = null, arg3 = null, arg4 = null, arg5 = null):
-        _current_tested_signal_received = true
-        if check_arguments:
-            _current_tested_signal_arguments.append(arg1)
-            _current_tested_signal_arguments.append(arg2)
-            _current_tested_signal_arguments.append(arg3)
-            _current_tested_signal_arguments.append(arg4)
-            _current_tested_signal_arguments.append(arg5)
+    var signal_collector:SignalCollector = SignalCollector.new(sig.get_object())
+    signal_collector.collect_signal(sig)
 
-    # Listen to signal emission
-    sig.connect(signal_receiver)
     while !_current_tested_signal_received and ellapsed_time_ms / 1000.0 < _at_most_duration_seconds:
         await Engine.get_main_loop().create_timer(_poll_delay_seconds).timeout
         ellapsed_time_ms = Time.get_ticks_msec() - start_tick_ms
+        if check_arguments:
+            _current_tested_signal_received = signal_collector.has_received_signal_with_args(sig, args)
+        else:
+            _current_tested_signal_received = signal_collector.has_received_signal(sig)
 
-    # Stop listening to signal emission
-    if is_instance_valid(sig):
-        sig.disconnect(signal_receiver)
+    var success_signal_received:bool = signal_collector.has_received_signal(sig)
+    signal_collector.finilize()
 
     # Test is done (success of failure, but done) ; we remove await failed assertion
     _reporter.assertion_reports.erase(await_fail_report)
 
     var ellapsed_time_s:float = ellapsed_time_ms / 1000.0
-    var success_signal_received:bool = _current_tested_signal_received and ellapsed_time_s >= _at_least_duration_seconds and ellapsed_time_s <= _at_most_duration_seconds
-    var global_success:bool
-    var success_signal_arguments:bool = true
     var report_description:String
     var message_prefix:String = "Signal '%s'" % sig.get_name() if _description.is_empty() else "'%s'" % _description
 
-    if check_arguments:
-        # Argument check participates to global success
-        for a in args.size():
-            if success_signal_arguments:
-                success_signal_arguments = args[a] == _current_tested_signal_arguments[a]
-
     # Compute report
-    global_success = success_signal_received and success_signal_arguments
-    if global_success:
+    if _current_tested_signal_received:
         if check_arguments:
             report_description = "%s received in %ss with expected arguments" % [message_prefix, ellapsed_time_s]
         else:
@@ -168,7 +152,7 @@ func _until_signal_emitted(sig:Signal, check_arguments:bool = false, args:Array 
 
     var report:AssertionReport = AssertionReport.new()
     report.line_number = _get_assertion_line_number()
-    report.is_success = global_success
+    report.is_success = _current_tested_signal_received
     report.description = report_description
     _reporter.assertion_reports.append(report)
 
