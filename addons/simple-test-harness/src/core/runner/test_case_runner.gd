@@ -72,6 +72,7 @@ func execute(test_case_plan:STHTestCasePlan) -> void:
                 var tested_script_instance:TestCase = tested_script.new()
                 call_deferred("_execute_method", test_case_plan, tested_script_instance, test_method)
                 await method_completed
+                tested_script_instance._finalize()
                 tested_script_instance.free()
 
             # AFTER ALL

@@ -18,6 +18,7 @@ extends Node
 #------------------------------------------
 
 var _reporter:AssertionReporter
+var _signal_collectors:Array[SignalCollector] = []
 
 #------------------------------------------
 # Fonctions Godot redéfinies
@@ -38,6 +39,20 @@ func beforeEach() -> void:
 
 func afterEach() -> void:
     pass
+
+# COLLECTORS
+
+func collect_signals_of(object:Object) -> void:
+    if _get_signal_collector_matching_object(object) == null:
+        var signal_collector:SignalCollector = SignalCollector.new(object)
+        signal_collector.collect_all_signals()
+        _signal_collectors.append(signal_collector)
+
+func collect_signal(sig:Signal) -> void:
+    if _get_signal_collector_matching(sig) == null:
+        var signal_collector:SignalCollector = SignalCollector.new(sig.get_object())
+        signal_collector.collect_signal(sig)
+        _signal_collectors.append(signal_collector)
 
 # ASSERT SHORTCUTS
 func assert_true(value:bool) -> void:
@@ -62,6 +77,9 @@ func assert_not_equals(expected:Variant, value:Variant) -> void:
 func assert_that(value:Variant) -> AssertThat:
     return AssertThat.new(value, _reporter)
 
+func assert_that_signal(sig:Signal) -> AssertThatSignal:
+    return AssertThatSignal.new(sig, _signal_collectors, _reporter)
+
 func assert_that_int(value:int) -> AssertThatInt:
     return AssertThatInt.new(value, _reporter)
 
@@ -79,3 +97,22 @@ func await_for(description:String = "") -> AwaitFor:
 
 func _set_assertion_reporter(reporter:AssertionReporter) -> void:
     _reporter = reporter
+
+func _finalize() -> void:
+    _reporter = null
+
+    for sig_collector in _signal_collectors:
+        sig_collector.finalize()
+    _signal_collectors.clear()
+
+func _get_signal_collector_matching(sig:Signal) -> SignalCollector:
+    for signal_collector in _signal_collectors:
+        if signal_collector.is_collecting(sig):
+            return signal_collector
+    return null
+
+func _get_signal_collector_matching_object(object:Object) -> SignalCollector:
+    for signal_collector in _signal_collectors:
+        if signal_collector.is_collecting_all_signals_for(object):
+            return signal_collector
+    return null
