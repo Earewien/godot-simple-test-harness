@@ -83,13 +83,14 @@ func _on_editor_script_changed(script) -> void:
 
     # Yes, hook menu !
     var script_editor:ScriptEditorBase = _plugin.get_editor_interface().get_script_editor().get_current_editor()
-    # When script is saved or changed, reload popupmenu
-    if not script_editor.edited_script_changed.is_connected(_on_editor_script_changed):
-        script_editor.edited_script_changed.connect(_on_editor_script_changed.bind(script))
-    _current_script_editor_popup_menu = _get_child_popup_menu(script_editor)
-    _add_test_entries_to_menu_if_needed(_current_script_editor_popup_menu, script_editor)
-    # And hook shortcut if needed ! Shortcuts don't work on those popup menus, have to do it manually
-    _install_shortcuts_on_editor(script_editor)
+    if is_instance_valid(script_editor):
+        # When script is saved or changed, reload popupmenu
+        if not script_editor.edited_script_changed.is_connected(_on_editor_script_changed):
+            script_editor.edited_script_changed.connect(_on_editor_script_changed.bind(script))
+        _current_script_editor_popup_menu = _get_child_popup_menu(script_editor)
+        _add_test_entries_to_menu_if_needed(_current_script_editor_popup_menu, script_editor)
+        # And hook shortcut if needed ! Shortcuts don't work on those popup menus, have to do it manually
+        _install_shortcuts_on_editor(script_editor)
 
 func _add_test_entries_to_menu_if_needed(menu:PopupMenu, script_editor:ScriptEditorBase) -> void:
     if menu == null:
