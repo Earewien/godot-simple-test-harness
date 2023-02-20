@@ -156,6 +156,10 @@ func _reload_gutter_for_script(script:GDScript) -> void:
         return
 
     var script_editor:ScriptEditorBase = _cached_script_editors[script.resource_path]["editor"]
+    if not is_instance_valid(script_editor):
+        _remove_script_from_cache(script.resource_path)
+        return
+
     var code_edit:CodeEdit = script_editor.get_base_editor() as CodeEdit
     var sth_gutter_id:int = _cached_script_editors[script.resource_path]["gutter_id"]
 
