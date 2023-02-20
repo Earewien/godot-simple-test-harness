@@ -124,7 +124,7 @@ func _until_signal_emitted(sig:Signal, check_arguments:bool = false, args:Array 
             _current_tested_signal_received = signal_collector.has_received_signal(sig)
 
     var success_signal_received:bool = signal_collector.has_received_signal(sig)
-    signal_collector.finilize()
+    signal_collector.finalize()
 
     # Test is done (success of failure, but done) ; we remove await failed assertion
     _reporter.assertion_reports.erase(await_fail_report)

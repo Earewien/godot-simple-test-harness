@@ -136,7 +136,7 @@ func has_received_signal_with_args_in_exact_order(sig:Signal, args_array:Array[A
 
     return false
 
-func finilize() -> void:
+func finalize() -> void:
     for sig in _connected_signals:
         if not sig.is_null():
             sig.disconnect(_on_signal_received)
