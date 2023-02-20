@@ -16,6 +16,7 @@ func test_collect_signal_then_finalize_collectors() -> void:
     test_case.collect_signal(emitter.test_signal)
 
     test_case._finalize()
+    test_case.queue_free()
     # No Error !
 
 
