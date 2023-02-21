@@ -77,9 +77,13 @@ func assert_not_equals(expected:Variant, value:Variant) -> void:
 func assert_that(value:Variant) -> AssertThat:
     return AssertThat.new(value, _reporter)
 
-# To test null values, we need to stuck to Variant and not String, as String can not be null !
+# To test null values, we need to stuck to Variant and not Color, as Color can not be null !
 func assert_that_color(value:Variant) -> AssertThatColor:
     return AssertThatColor.new(value, _reporter)
+
+# To test null values, we need to stuck to Variant and not Dictionary, as Dictionary can not be null !
+func assert_that_dictionary(value:Variant) -> AssertThatDictionary:
+    return AssertThatDictionary.new(value, _reporter)
 
 func assert_that_signal(sig:Signal) -> AssertThatSignal:
     return AssertThatSignal.new(sig, _signal_collectors, _reporter)
