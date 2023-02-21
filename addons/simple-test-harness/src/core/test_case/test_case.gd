@@ -102,6 +102,10 @@ func assert_that_float(value:float) -> AssertThatFloat:
 func assert_that_string(value:Variant) -> AssertThatString:
     return AssertThatString.new(value, _reporter)
 
+# To test null values, we need to stuck to Variant and not Vector2, as Vector2 can not be null !
+func assert_that_vector2(value:Variant) -> AssertThatVector2:
+    return AssertThatVector2.new(value, _reporter)
+
 # AWAIT
 func await_for(description:String = "") -> AwaitFor:
     return AwaitFor.new(_reporter, description)
