@@ -110,6 +110,10 @@ func assert_that_vector2(value:Variant) -> AssertThatVector2:
 func assert_that_vector3(value:Variant) -> AssertThatVector3:
     return AssertThatVector3.new(value, _reporter)
 
+# To test null values, we need to stuck to Variant and not Vector3i, as Vector3i can not be null !
+func assert_that_vector3i(value:Variant) -> AssertThatVector3i:
+    return AssertThatVector3i.new(value, _reporter)
+
 # AWAIT
 func await_for(description:String = "") -> AwaitFor:
     return AwaitFor.new(_reporter, description)
