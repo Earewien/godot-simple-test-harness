@@ -77,6 +77,10 @@ func assert_not_equals(expected:Variant, value:Variant) -> void:
 func assert_that(value:Variant) -> AssertThat:
     return AssertThat.new(value, _reporter)
 
+# To test null values, we need to stuck to Variant and not Array, as Array can not be null !
+func assert_that_array(value:Variant) -> AssertThatArray:
+    return AssertThatArray.new(value, _reporter)
+
 # To test null values, we need to stuck to Variant and not Color, as Color can not be null !
 func assert_that_color(value:Variant) -> AssertThatColor:
     return AssertThatColor.new(value, _reporter)
