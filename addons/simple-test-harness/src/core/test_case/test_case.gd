@@ -106,6 +106,10 @@ func assert_that_string(value:Variant) -> AssertThatString:
 func assert_that_vector2(value:Variant) -> AssertThatVector2:
     return AssertThatVector2.new(value, _reporter)
 
+# To test null values, we need to stuck to Variant and not Vector2i, as Vector2i can not be null !
+func assert_that_vector2i(value:Variant) -> AssertThatVector2i:
+    return AssertThatVector2i.new(value, _reporter)
+
 # To test null values, we need to stuck to Variant and not Vector3, as Vector3 can not be null !
 func assert_that_vector3(value:Variant) -> AssertThatVector3:
     return AssertThatVector3.new(value, _reporter)
