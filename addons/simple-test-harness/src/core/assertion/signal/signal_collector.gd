@@ -169,11 +169,16 @@ func _on_signal_received(arg1 = null, arg2 = null, arg3 = null, arg4 = null, arg
     var all_args_as_array:Array = [arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25, arg26, arg27, arg28, arg29, arg30]
     var sig:Signal
     var arg_count:int
-    for i in range(all_args_as_array.size() - 1, -1, -1):
+    # Backward for loop not working anymore in Godot 4 RC4 :(
+    # https://github.com/AdrienQuillet/godot-simple-test-harness/issues/20
+    var size:= all_args_as_array.size()
+    var i:int = size - 1
+    while i >= 0:
         if all_args_as_array[i] is Signal:
             sig = all_args_as_array[i]
             arg_count = all_args_as_array[i+1]
             break
+        i -= 1
     var signal_args:Array = all_args_as_array.slice(0, arg_count)
 
     if not received_signals.has(sig.get_name()):
